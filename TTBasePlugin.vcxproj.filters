@@ -13,6 +13,12 @@
       <UniqueIdentifier>{26b22302-f875-418a-9e15-e22b8ed5b7d6}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
+    <Filter Include="Header Files\include">
+      <UniqueIdentifier>{911dec49-9169-4f8f-844a-6b39b09c823b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\include">
+      <UniqueIdentifier>{9de7bbc9-fc6a-44f6-b422-412218890931}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -26,6 +32,9 @@
     </ClCompile>
     <ClCompile Include="MessageDef.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="include\UWnd.cpp">
+      <Filter>Source Files\include</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -47,8 +56,17 @@
     <ClInclude Include="SettingWnd.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="list.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\UWnd.hpp">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CtrlWnd.hpp">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Font.hpp">
+      <Filter>Header Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -57,8 +75,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="TTBasePlugin.res">
+    <ResourceCompile Include="TTBasePlugin.rc">
       <Filter>Resource Files</Filter>
-    </Resource>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

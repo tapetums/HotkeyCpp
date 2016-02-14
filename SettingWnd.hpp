@@ -11,268 +11,232 @@
 #include <windows.h>
 #include <windowsx.h>
 
+#include "resource.h"
+
+#include "include/UWnd.hpp"
+#include "include/CtrlWnd.hpp"
+#include "include/Font.hpp"
+
+#ifndef HOTKEYF_WIN
+  #define HOTKEYF_WIN 0x10
+#endif
+
 //---------------------------------------------------------------------------//
-// ユーティリティ関数
+// 前方宣言
 //---------------------------------------------------------------------------//
 
-namespace
-{
-    inline void AdjustRect
-    (
-        HWND hwnd, INT32* w, INT32* h
-    )
-    {
-        RECT rc{ 0, 0, *w, *h };
-        const auto style   = (DWORD)::GetWindowLongPtr(hwnd, GWL_STYLE);
-        const auto styleEx = (DWORD)::GetWindowLongPtr(hwnd, GWL_EXSTYLE);
-        const auto isChild = style & WS_CHILD;
-        const BOOL hasMenu = (!isChild && ::GetMenu(hwnd)) ? TRUE : FALSE;
-
-        ::AdjustWindowRectEx(&rc, style, hasMenu, styleEx);
-        *w = rc.right  - rc.left;
-        *h = rc.bottom - rc.top;
-    }
-
-    inline void GetRectForMonitorUnderCursor
-    (
-        RECT* rect
-    )
-    {
-        POINT pt;
-        ::GetCursorPos(&pt);
-        const auto hMonitor = ::MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-        MONITORINFOEX miex;
-        miex.cbSize = (DWORD)sizeof(MONITORINFOEX);
-        ::GetMonitorInfo(hMonitor, &miex);
-
-        *rect = miex.rcMonitor;
-    }
-}
+INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
 
 //---------------------------------------------------------------------------//
 // クラス
 //---------------------------------------------------------------------------//
 
-class SettingWnd
+class SettingWnd : public tapetums::UWnd
 {
+    using super = tapetums::UWnd;
+
 private:
-    LPCTSTR m_class_name { TEXT("SettingWnd") };
-    HWND    m_hwnd       { nullptr };
-    INT32   m_x          { 0 };
-    INT32   m_y          { 0 };
-    INT32   m_w          { 0 };
-    INT32   m_h          { 0 };
+    tapetums::Font    font;
+    tapetums::ListWnd list_cmd;
+    tapetums::BtnWnd  btn_add;
+    tapetums::BtnWnd  btn_edit;
+    tapetums::BtnWnd  btn_del;
+
+public:
+    struct CTRL
+    {
+        enum : INT16 { LIST_COMMAND, BTN_ADD, BTN_EDIT, BTN_DEL, };
+    };
 
 public:
     SettingWnd()
     {
-        Register(m_class_name);
-        Create(PLUGIN_NAME, WS_OVERLAPPEDWINDOW, 0, nullptr, nullptr);
-        Resize(320, 240);
+        font.create(16, TEXT("Meiryo UI"), FW_REGULAR);
+
+        const auto hwnd = Create
+        (
+            PLUGIN_NAME, WS_CAPTION | WS_SYSMENU, 0, nullptr, nullptr
+        );
+        Resize(480, 320);
+        SetFont(font);
+
+        auto style = WS_VSCROLL | WS_HSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL;
+        auto styleEx = LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_HEADERDRAGDROP;
+        list_cmd.Create(style, styleEx, hwnd, CTRL::LIST_COMMAND);
+        list_cmd.Bounds(4, 4, 472, 280);
+        list_cmd.SetFont(font);
+        list_cmd.InsertColumn(TEXT("keys"),    140, 0);
+        list_cmd.InsertColumn(TEXT("command"), 180, 1);
+        list_cmd.InsertColumn(TEXT("ID"),       34, 2);
+        list_cmd.InsertColumn(TEXT("param"),   100, 3);
+
+        btn_add. Create(BS_PUSHBUTTON, hwnd, CTRL::BTN_ADD);
+        btn_edit.Create(BS_PUSHBUTTON, hwnd, CTRL::BTN_EDIT);
+        btn_del. Create(BS_PUSHBUTTON, hwnd, CTRL::BTN_DEL);
+
+        btn_add. Bounds(360 - 60 + 24, 320 - 36, 120, 24);
+        btn_edit.Bounds(240 - 60 +  0, 320 - 36, 120, 24);
+        btn_del. Bounds(120 - 60 - 24, 320 - 36, 120, 24);
+
+        btn_add. SetFont(font);
+        btn_edit.SetFont(font);
+        btn_del. SetFont(font);
+
+        btn_add. SetText(TEXT("追加"));
+        btn_edit.SetText(TEXT("編集"));
+        btn_del. SetText(TEXT("削除"));
+
+        MakeCommandList();
     }
 
 public:
-    operator HWND() { return m_hwnd; }
-
-public:
-    static LRESULT CALLBACK WndMapProc
-    (
-        HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
-    )
+    LRESULT WndProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) override
     {
-        SettingWnd* wnd;
-
-        // UWndオブジェクトのポインタを取得
-        if ( uMsg == WM_NCCREATE )
+        if ( uMsg == WM_CREATE )
         {
-            wnd = (SettingWnd*)((CREATESTRUCT*)lp)->lpCreateParams;
-
-            ::SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)wnd);
+            return OnCreate(hwnd);
         }
-        else
-        {
-            wnd = (SettingWnd*)::GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        }
-
-        // まだマップされていない場合はデフォルトプロシージャに投げる
-        if ( nullptr == wnd )
-        {
-            return ::DefWindowProc(hwnd, uMsg, wp, lp);
-        }
-
-        // メンバ変数に情報を保存
-        switch ( uMsg )
-        {
-            case WM_CREATE:
-            {
-                wnd->m_hwnd = hwnd; // ウィンドウハンドル
-                break;
-            }
-            case WM_MOVE:
-            {
-                wnd->m_x = GET_X_LPARAM(lp); // ウィンドウX座標
-                wnd->m_y = GET_Y_LPARAM(lp); // ウィンドウY座標
-                break;
-            }
-            case WM_SIZE:
-            {
-                wnd->m_w = LOWORD(lp); // ウィンドウ幅
-                wnd->m_h = HIWORD(lp); // ウィンドウ高
-                break;
-            }
-            default:
-            {
-                break;
-            }
-        }
-
-        // ウィンドウプロシージャの呼び出し
-        return wnd->WndProc(hwnd, uMsg, wp, lp);
-    }
-
-public:
-    LRESULT WndProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
-    {
-        if ( uMsg == WM_CLOSE )
+        else if ( uMsg == WM_CLOSE )
         {
             Hide(); return 0;
         }
+        else if ( uMsg == WM_COMMAND )
+        {
+            return OnCommand(hwnd, LOWORD(wp));
+        }
         else
         {
             return ::DefWindowProc(hwnd, uMsg, wp, lp);
         }
     }
 
-public:
-    ATOM Register
-    (
-        LPCTSTR lpszClassName
-    )
+private:
+    LRESULT OnCreate(HWND)
     {
-        WNDCLASSEX wcex
-        {
-            sizeof(WNDCLASSEX),
-            CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS,
-            WndMapProc,
-            0, 0,
-            ::GetModuleHandle(nullptr),
-            nullptr,
-            ::LoadCursor(nullptr, IDC_ARROW),
-            nullptr,
-            nullptr,
-            lpszClassName,
-            nullptr,
-        };
-
-        return ::RegisterClassEx(&wcex);
+        return 0;
     }
 
-    HWND Create
-    (
-        LPCTSTR lpszWindowName,
-        DWORD   style,
-        DWORD   styleEx,
-        HWND    hwndParent,
-        HMENU   hMenu
-    )
+    LRESULT OnCommand(HWND hwnd, INT16 wID)
     {
-        if ( m_hwnd ) { return m_hwnd; } // 二重生成防止!
-
-        const auto hwnd = ::CreateWindowEx
-        (
-            styleEx, m_class_name, lpszWindowName, style,
-            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            hwndParent, hMenu, ::GetModuleHandle(nullptr),
-            reinterpret_cast<LPVOID>(this)
-        );
-        if ( nullptr == hwnd )
+        if ( wID == CTRL::BTN_ADD )
         {
-            //ShowLastError(class_name);
         }
-        else
+        else if ( wID == CTRL::BTN_EDIT )
         {
-            ::UpdateWindow(hwnd);
+            ::DialogBoxParam
+            (
+                g_hInst, MAKEINTRESOURCE(IDD_DIALOG_EDIT),
+                hwnd, DialogProc, 0
+            );
+        }
+        else if ( wID == CTRL::BTN_DEL )
+        {
+            DeleteItem(list_cmd.SelectedIndex());
+        }
+        return 0;
+    }
+
+    void MakeCommandList()
+    {
+        TCHAR buf [MAX_PATH];
+
+        const auto infos = TTBPlugin_GetAllPluginInfo();
+        if ( nullptr == infos )
+        {
+            return;
         }
 
-        return hwnd;
-    }
-
-    void Move
-    (
-        INT32 x, INT32 y
-    )
-    {
-        ::SetWindowPos
-        (
-            m_hwnd, nullptr,
-            x, y, 0, 0,
-            SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED
-        );
-    }
-
-    void Resize
-    (
-        INT32 w, INT32 h
-    )
-    {
-        AdjustRect(m_hwnd, &w, &h);
-
-        ::SetWindowPos
-        (
-            m_hwnd, nullptr,
-            0, 0, w, h,
-            SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED
-        );
-    }
-
-    void ToCenter()
-    {
-        RECT rc;
-        INT32 mx, my, mw, mh;
-
-        if ( const auto parent = GetParent() )
+        INT32 index = 0;
+        const auto& commands = settings::get().commands;
+        for ( auto&& cmd: commands )
         {
-            ::GetWindowRect(parent, &rc);
-            mx = rc.left;
-            my = rc.top;
-            mw = rc.right  - rc.left;
-            mh = rc.bottom - rc.top;
-        }
-        else
-        {
-            GetRectForMonitorUnderCursor(&rc);
-            mx = rc.left;
-            my = rc.top;
-            mw = rc.right  - rc.left;
-            mh = rc.bottom - rc.top;
+            GetHotkeyString(cmd.key, buf, MAX_PATH);
+            list_cmd.InsertItem(buf, index);
+
+            for ( size_t i = 0; ; ++i )
+            {
+                auto info = infos[i];
+                if ( nullptr == info )
+                {
+                    break;
+                }
+                if ( 0 == lstrcmp(cmd.filename, info->Filename) )
+                {
+                    list_cmd.SetItem(info->Name, index, 1);
+                    break;
+                }
+            }
+
+            ::wsprintf(buf,TEXT("%u"), cmd.id);
+            list_cmd.SetItem(buf, index, 2);
+
+            list_cmd.SetItem(cmd.param, index, 3);
+
+            ++index;
         }
 
-        ::GetClientRect(m_hwnd, &rc);
-        const auto w = rc.right  - rc.left;
-        const auto h = rc.bottom - rc.top;
-
-        const auto x = (mw - w) / 2 + mx;
-        const auto y = (mh - h) / 2 + my;
-
-        return Move(x, y);
+        TTBPlugin_FreePluginInfoArray(infos);
     }
 
-    void Show()
+    void GetHotkeyString(INT32 key, TCHAR* buf, size_t buf_size)
     {
-        ::ShowWindowAsync(m_hwnd, SW_SHOWNORMAL);
+        TCHAR mod_txt[MAX_PATH];
+        mod_txt[0] = '\0';
+
+        const auto mod = HIBYTE(key);
+        if ( mod & HOTKEYF_CONTROL )
+        {
+            ::StringCchCat(mod_txt, 64, TEXT("Ctrl + "));
+        }
+        if ( mod & HOTKEYF_SHIFT )
+        {
+            ::StringCchCat(mod_txt, 64, TEXT("Shift + "));
+        }
+        if ( mod & HOTKEYF_ALT )
+        {
+            ::StringCchCat(mod_txt, 64, TEXT("Alt + "));
+        }
+        if ( mod & HOTKEYF_WIN )
+        {
+            ::StringCchCat(mod_txt, 64, TEXT("Win + "));
+        }
+
+        const auto vk  = LOBYTE(key);
+        const auto sc = ::MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+
+        TCHAR vk_txt[MAX_PATH];
+        ::GetKeyNameText((sc << 16), vk_txt, MAX_PATH);
+
+        ::StringCchCat(mod_txt, MAX_PATH, vk_txt);
+        ::StringCchCopy(buf, buf_size, mod_txt); 
     }
 
-    void Hide()
+    void DeleteItem(INT32 index)
     {
-        ::ShowWindowAsync(m_hwnd, SW_HIDE);
-    }
-
-    HWND GetParent() const noexcept
-    {
-        return (HWND)::GetWindowLongPtr(m_hwnd, GWLP_HWNDPARENT);
+        if ( index < 0 ) { return; }
+        ::MessageBox(nullptr, TEXT("BTN_DEL"), TEXT(""), MB_OK);
     }
 };
+
+//---------------------------------------------------------------------------//
+// コールバック関数
+//---------------------------------------------------------------------------//
+
+INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM, LPARAM)
+{
+    switch ( uMsg )
+    {
+        case WM_CLOSE:
+        {
+            ::EndDialog(hwnd, IDOK);
+            return TRUE;
+        }
+        default:
+        {
+            return FALSE;
+        }
+    }
+}
 
 //---------------------------------------------------------------------------//
 

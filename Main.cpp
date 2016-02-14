@@ -5,7 +5,10 @@
 //
 //---------------------------------------------------------------------------//
 
+#include <memory>
+
 #include <windows.h>
+#include <strsafe.h>
 
 #include "Plugin.hpp"
 #include "MessageDef.hpp"
@@ -24,8 +27,7 @@
 
 HINSTANCE g_hInst { nullptr };
 
-Settings*   settings { nullptr };
-SettingWnd* wnd      { nullptr };
+std::unique_ptr<SettingWnd> wnd;
 
 //---------------------------------------------------------------------------//
 
@@ -91,15 +93,10 @@ PLUGIN_INFO g_info =
 // TTBEvent_Init() の内部実装
 BOOL Init(void)
 {
-    if ( nullptr == settings ) { settings = new Settings; }
-
     if ( nullptr == wnd )
     {
         WriteLog(elDebug, TEXT("%s: %s"), PLUGIN_NAME, TEXT("Init()"));
-        wnd = new SettingWnd;
-
-        command cmd;
-        cmd.key = VK_CONTROL | VK_LWIN;
+        wnd = std::make_unique<SettingWnd>();
     }
 
     return TRUE;
@@ -110,13 +107,7 @@ BOOL Init(void)
 // TTBEvent_Unload() の内部実装
 void Unload(void)
 {
-    if ( wnd )
-    {
-        delete wnd; wnd = nullptr;
-        WriteLog(elDebug, TEXT("%s: %s"), PLUGIN_NAME, TEXT("Unload()"));
-    }
-
-    if ( settings ) { delete settings; settings = nullptr; }
+    WriteLog(elDebug, TEXT("%s: %s"), PLUGIN_NAME, TEXT("Unload()"));
 }
 
 //---------------------------------------------------------------------------//
@@ -130,11 +121,11 @@ BOOL Execute(INT32 CmdId, HWND hWnd)
     {
         case CMD_SWITCH:
         {
-            settings->enable ^= true;
+            settings::get().enable ^= true;
             TTBPlugin_SetMenuProperty
             (
                 g_hPlugin, CMD_SWITCH, DISPMENU_CHECKED,
-                settings->enable ? dmMenuChecked : dmUnchecked
+                settings::get().enable ? dmMenuChecked : dmUnchecked
             );
             return TRUE;
         }

@@ -1,0 +1,154 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+/////////////////////////////////////////////////////////////////////////////
+// ニュートラル resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(932)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+1 VERSIONINFO
+ FILEVERSION 0,1,0,0
+ PRODUCTVERSION 0,1,0,0
+ FILEFLAGSMASK 0x0L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x0L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "0800fde9"
+        BEGIN
+            VALUE "Comments", "TTBase Hotkey plugin"
+            VALUE "FileDescription", "TTBase Hotkey plugin"
+            VALUE "FileVersion", "0.1.0.0"
+            VALUE "InternalName", "HotkeyCpp"
+            VALUE "LegalCopyright", "Copyright (C) 2016 tapetums"
+            VALUE "OriginalFilename", "HotkeyCpp"
+            VALUE "ProductName", "HotkeyCpp"
+            VALUE "ProductVersion", "0.1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x800, 65001
+    END
+END
+
+#endif    // ニュートラル resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// 日本語 (日本) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+#pragma code_page(932)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG_EDIT DIALOGEX 0, 0, 268, 58
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "HotkeyCpp Command Setting"
+FONT 8, "Meiryo UI", 400, 0, 0x80
+BEGIN
+    PUSHBUTTON      "file...",ID_FILE,203,23,26,12
+    PUSHBUTTON      "cmd...",ID_CMD,232,23,25,12
+    EDITTEXT        IDC_EDIT1,43,7,61,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,43,23,156,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,43,39,156,12,ES_AUTOHSCROLL
+    CONTROL         "Ctrl",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,7,27,8
+    CONTROL         "Shift",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,7,27,8
+    CONTROL         "Alt",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,7,27,8
+    CONTROL         "Win",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,219,7,27,8
+    LTEXT           "hotkey",IDC_STATIC,7,9,22,8
+    LTEXT           "command",IDC_STATIC,7,25,32,8
+    LTEXT           "param",IDC_STATIC,7,40,21,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG_EDIT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 261
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 51
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOG_EDIT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // 日本語 (日本) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

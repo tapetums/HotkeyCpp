@@ -8,14 +8,14 @@
 //
 //---------------------------------------------------------------------------//
 
-#include <array>
+#include <list>
 
 #include <windows.h>
 
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib") // PathRenameExtension
 
-#include "list.hpp"
+#include "Plugin.hpp"
 
 //---------------------------------------------------------------------------//
 // Global Variables
@@ -34,99 +34,129 @@ struct command
     INT32  id;
     TCHAR  filename [MAX_PATH];
     TCHAR  param    [MAX_PATH];
+
+    command()
+    {
+        key = 0;
+        id = -1;
+        filename[0] = param[0] = L'\0';
+    }
+
+    command(const command&) = delete;
+
+    command(command&& rhs) noexcept
+    {
+        key = rhs.key;
+        id  = rhs.id;
+        ::StringCchCopy(filename, MAX_PATH, rhs.filename);
+        ::StringCchCopy(param,    MAX_PATH, rhs.param);
+    }
 };
 
 //---------------------------------------------------------------------------//
 // Class
 //---------------------------------------------------------------------------//
 
-class Settings
+class settings
 {
 public:
-    bool enable;
-    tapetums::list<command> commands;
+    static settings& get() { static settings s; return s; }
 
 public:
-    Settings();
-    ~Settings();
-};
+    bool enable;
+    std::list<command> commands;
 
-extern Settings* settings;
+private:
+    settings();
+    ~settings();
+};
 
 //---------------------------------------------------------------------------//
 // Methods
 //---------------------------------------------------------------------------//
 
-inline Settings::Settings()
+inline settings::settings()
 {
-    std::array<wchar_t, MAX_PATH> path;
+    TCHAR path [MAX_PATH];
 
     // iniファイル名取得
-    ::GetModuleFileNameW(g_hInst, path.data(), (DWORD)path.size());
-    ::PathRenameExtensionW(path.data(), L".ini");
+    ::GetModuleFileName(g_hInst, path, MAX_PATH);
+    ::PathRenameExtension(path,TEXT(".ini"));
 
     // パラメータの取得
-    enable = ::GetPrivateProfileIntW
+    enable = ::GetPrivateProfileInt
     (
-        L"Setting", L"enable", -1, path.data()
+       TEXT("Setting"),TEXT("enable"), -1, path
     )
     ? true : false;
 
-    std::array<wchar_t, 16> num;
+    TCHAR num [16];
     for ( size_t idx = 0; ; ++idx )
     {
-        ::wsprintfW(num.data(), L"%u", idx);
+        ::wsprintf(num,TEXT("%u"), idx);
 
         command cmd;
-        cmd.key = ::GetPrivateProfileIntW(num.data(), L"key", -1, path.data());
+        cmd.key = ::GetPrivateProfileInt(num,TEXT("key"), -1, path);
         if ( cmd.key == -1 )
         {
             break;
         }
 
-        cmd.id = ::GetPrivateProfileIntW(num.data(), L"id", 0, path.data());
-        ::GetPrivateProfileStringW
+        cmd.id = ::GetPrivateProfileInt(num,TEXT("id"), 0, path);
+        ::GetPrivateProfileString
         (
-            num.data(), L"filename", nullptr, cmd.filename, MAX_PATH, path.data()
+            num,TEXT("filename"),TEXT(""), cmd.filename, MAX_PATH, path
         );
-        ::GetPrivateProfileStringW
+        ::GetPrivateProfileString
         (
-            num.data(), L"param", nullptr, cmd.param, MAX_PATH, path.data()
+            num,TEXT("param"),TEXT(""), cmd.param, MAX_PATH, path
         );
 
-        commands.push_back(std::move(cmd));
+        bool already_reged = false;
+        for ( const auto& cmd_reged: commands )
+        {
+            if ( cmd_reged.key == cmd.key )
+            {
+                already_reged = true; break;
+            }
+        }
+        if ( ! already_reged )
+        {
+            commands.push_back(std::move(cmd));
+        }
     }
 }
 
 //---------------------------------------------------------------------------//
 
-inline Settings::~Settings()
+inline settings::~settings()
 {
-    std::array<wchar_t, MAX_PATH> path;
-    std::array<wchar_t, 16> buf;
+    TCHAR path [MAX_PATH];
+    TCHAR buf  [16];
 
     // iniファイル名取得
-    ::GetModuleFileNameW(g_hInst, path.data(), (DWORD)path.size());
-    ::PathRenameExtensionW(path.data(), L".ini");
+    ::GetModuleFileName(g_hInst, path, MAX_PATH);
+    ::PathRenameExtension(path,TEXT(".ini"));
 
     // パラメータの書き出し
-    ::wsprintfW(buf.data(), L"%i", enable);
-    ::WritePrivateProfileStringW(L"Setting", L"enable", buf.data(), path.data());
+    ::wsprintf(buf,TEXT("%i"), enable);
+    ::WritePrivateProfileString(TEXT("Setting"),TEXT("enable"), buf, path);
 
     size_t idx = 0;
-    std::array<wchar_t, 16> num;
+    TCHAR num [16];
     for ( auto&& cmd: commands )
     {
-        ::wsprintfW(num.data(), L"%u", idx);
+        ::wsprintf(num,TEXT("%u"), idx);
 
-        ::wsprintfW(num.data(), L"%u", cmd.key);
-        ::WritePrivateProfileStringW(buf.data(), L"key", buf.data(), path.data());
+        ::wsprintf(buf,TEXT("%u"), cmd.key);
+        ::WritePrivateProfileString(num,TEXT("key"), buf, path);
+        WriteLog(elDebug, TEXT("%s: %i"), PLUGIN_NAME, cmd.id);
 
-        ::wsprintfW(num.data(), L"%i", cmd.id);
-        ::WritePrivateProfileStringW(buf.data(), L"id", buf.data(), path.data());
+        ::wsprintf(buf,TEXT("%i"), cmd.id);
+        ::WritePrivateProfileString(num,TEXT("id"), buf, path);
 
-        ::WritePrivateProfileStringW(buf.data(), L"id", cmd.filename, path.data());
-        ::WritePrivateProfileStringW(buf.data(), L"id", cmd.param, path.data());
+        ::WritePrivateProfileString(num,TEXT("filename"), cmd.filename, path);
+        ::WritePrivateProfileString(num,TEXT("param"), cmd.param, path);
 
         ++idx;
     }
