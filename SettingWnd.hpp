@@ -20,6 +20,7 @@
 #include "include/Font.hpp"
 
 #include "Plugin.hpp"
+#include "Utility.hpp"
 
 #ifndef HOTKEYF_WIN
   #define HOTKEYF_WIN 0x10
@@ -32,13 +33,14 @@
 class SettingWnd;
 
 INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK SubclassProc(HWND, UINT, WPARAM, LPARAM, UINT_PTR, DWORD_PTR);
 
 PLUGIN_INFO* GetInfoByFilename(PLUGIN_INFO** infos, LPCTSTR Filename);
 INT32 GetCommandIndex   (const PLUGIN_INFO* info, INT32 CmdID);
 void  GetHotkeyString   (INT32 key, TCHAR* buf, size_t buf_size);
 void  GetCommandString  (LPCTSTR Filename, INT32 CmdID, TCHAR* buf, size_t buf_size);
 void  CheckVKeyItem     (HWND hwnd, INT16 mod);
-void  ShowVKeyName      (HWND hItem, INT16 vk);
+void  ShowVKeyString    (HWND hItem, INT16 vk);
 void  SetVKey           (command* pcmd, INT32 delta);
 void  SetCommandID      (command* pcmd, INT32 delta);
 void  ShowVKeyName      (HWND hwnd, command* pcmd);
@@ -349,9 +351,9 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             HWND hItem;
             TCHAR buf [MAX_PATH];
 
-            // 編集すべきコマンドを取得
-            //  グローバル変数なことに注意!! これはモーダルダイアログです
-            pcmd = (command*)lp;
+            // 情報を取得
+            // グローバル変数なことに注意!! これはモーダルダイアログです
+            pcmd  = (command*)lp;
 
             // キーの名前を表示
             ShowVKeyName(hwnd, pcmd);
@@ -364,7 +366,7 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             ::SetWindowText(hItem, pcmd->filename);
 
             // プラグインの一覧をコンボボックスに登録
-            const auto infos = TTBPlugin_GetAllPluginInfo();
+            const auto infos = TTBPlugin_GetAllPluginInfo(); // リークに注意
             for ( size_t index = 0; ; ++index )
             {
                 const auto info = infos[index];
@@ -372,7 +374,7 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
                 ::SendMessage(hItem, CB_ADDSTRING, 0, (LPARAM)info->Filename);
             }
-            TTBPlugin_FreePluginInfoArray(infos);
+            TTBPlugin_FreePluginInfoArray(infos); // 忘れるとメモリリーク
 
             // コマンド引数を表示
             hItem = ::GetDlgItem(hwnd, IDC_EDIT3);
@@ -397,6 +399,9 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             // コマンドのキャプションを表示
             ShowCommandCaption(hwnd, pcmd);
 
+            hItem = ::GetDlgItem(hwnd, IDC_EDIT1);
+            ::SetWindowSubclass(hItem, SubclassProc, 0, DWORD_PTR(hwnd));
+
             return TRUE;
         }
         case WM_COMMAND:
@@ -405,6 +410,7 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
             if ( wID == IDOK )
             {
+
                 // 終了して変更を反映
                 ::EndDialog(hwnd, IDOK);
             }
@@ -493,6 +499,17 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
             return TRUE;
         }
+        case WM_KEYDOWN:
+        {
+            const auto vk = LOBYTE(wp);
+            pcmd->key &= 0xFF00;
+            pcmd->key |= vk;
+
+            const auto hItem = ::GetDlgItem(hwnd, IDC_EDIT1);
+            ShowVKeyString(hItem, vk);
+
+            return TRUE;
+        }
         case WM_CLOSE:
         {
             // 終了して変更を破棄
@@ -503,6 +520,24 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
         {
             return FALSE;
         }
+    }
+}
+
+//---------------------------------------------------------------------------//
+
+LRESULT CALLBACK SubclassProc
+(
+    HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp,
+    UINT_PTR /*uIdSubclass*/, DWORD_PTR dwRefData
+)
+{
+    if ( uMsg == WM_KEYDOWN )
+    {
+        return ::SendMessage(HWND(dwRefData), uMsg, wp, lp);
+    }
+    else
+    {
+        return DefSubclassProc(hwnd, uMsg, wp, lp);
     }
 }
 
@@ -540,6 +575,8 @@ INT32 GetCommandIndex
     const PLUGIN_INFO* info, INT32 CmdID
 )
 {
+    if ( nullptr == info ) { return -1; }
+
     const auto count = info->CommandCount;
     for ( DWORD idx = 0; idx < count; ++idx )
     {
@@ -606,13 +643,12 @@ void GetCommandString
     LPCTSTR Filename, INT32 CmdID, TCHAR* buf, size_t buf_size
 )
 {
-    const auto infos = TTBPlugin_GetAllPluginInfo();
+    const auto infos = TTBPlugin_GetAllPluginInfo(); // リークに注意
 
     const auto info = GetInfoByFilename(infos, Filename);
     if ( nullptr == info )
     {
         ::StringCchCopy(buf, buf_size, Filename);
-        return;
     }
 
     const auto cmd_idx = GetCommandIndex(info, CmdID);
@@ -620,7 +656,7 @@ void GetCommandString
     {
         ::StringCchPrintf
         (
-            buf, buf_size, TEXT("%s - ?"), info->Name
+            buf, buf_size, TEXT("%s - ?"), info ? info->Name : TEXT("?")
         );
     }
     else
@@ -668,7 +704,7 @@ void CheckVKeyItem
 
 //---------------------------------------------------------------------------//
 
-void ShowVKeyName
+void ShowVKeyString
 (
     HWND hItem, INT16 vk
 )
@@ -753,7 +789,7 @@ void ShowVKeyName
     TCHAR buf [MAX_PATH];
 
     hItem = ::GetDlgItem(hwnd, IDC_EDIT1);
-    ShowVKeyName(hItem, LOBYTE(pcmd->key));
+    ShowVKeyString(hItem, LOBYTE(pcmd->key));
 
     ::StringCchPrintf(buf, MAX_PATH, TEXT("0x%02X"), LOBYTE(pcmd->key));
     hItem = ::GetDlgItem(hwnd, IDC_EDIT6);

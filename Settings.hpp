@@ -35,7 +35,7 @@ struct command
 
     command()
     {
-        key = 0;
+        key = 0x41;
         id  = 0;
         filename[0] = param[0] = L'\0';
     }

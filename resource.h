@@ -801,6 +801,7 @@
 #define IDC_EDIT1                       103
 #define VK_NUMPAD8                      0x68
 #define LANG_HAUSA                      0x68
+#define IDC_COMBO1                      104
 #define VK_NUMPAD9                      0x69
 #define IDC_EDIT3                       105
 #define VK_MULTIPLY                     0x6A
@@ -1225,7 +1226,6 @@
 #define WM_PENWINFIRST                  0x0380
 #define WM_PENWINLAST                   0x038F
 #define WM_DDE_FIRST                    0x03E0
-#define IDC_COMBO1                      104
 #define CF_GDIOBJLAST                   0x03FF
 #define _WIN32_WINNT_NT4                0x0400
 #define _WIN32_IE_IE40                  0x0400
@@ -1581,7 +1581,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1003
+#define _APS_NEXT_CONTROL_VALUE         115
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
