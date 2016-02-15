@@ -1,9 +1,9 @@
-#pragma once
+Ôªø#pragma once
 
 //---------------------------------------------------------------------------//
 //
 // SettingWnd.hpp
-//  ê›íËÉEÉBÉìÉhÉE
+//  Ë®≠ÂÆö„Ç¶„Ç£„É≥„Éâ„Ç¶
 //   Copyright (C) 2016 tapetums
 //
 //---------------------------------------------------------------------------//
@@ -24,7 +24,7 @@
 #endif
 
 //---------------------------------------------------------------------------//
-// ëOï˚êÈåæ
+// ÂâçÊñπÂÆ£Ë®Ä
 //---------------------------------------------------------------------------//
 
 PLUGIN_INFO* GetInfoByFilename(PLUGIN_INFO* infos[], LPCTSTR Filename);
@@ -44,7 +44,7 @@ bool OpenFileDialog (TCHAR* buf, size_t buf_size);
 INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
 
 //---------------------------------------------------------------------------//
-// ÉNÉâÉX
+// „ÇØ„É©„Çπ
 //---------------------------------------------------------------------------//
 
 class SettingWnd : public tapetums::UWnd
@@ -98,9 +98,9 @@ public:
         btn_edit.SetFont(font);
         btn_del. SetFont(font);
 
-        btn_add. SetText(TEXT("í«â¡"));
-        btn_edit.SetText(TEXT("ï“èW"));
-        btn_del. SetText(TEXT("çÌèú"));
+        btn_add. SetText(TEXT("ËøΩÂä†"));
+        btn_edit.SetText(TEXT("Á∑®ÈõÜ"));
+        btn_del. SetText(TEXT("ÂâäÈô§"));
 
         MakeCommandList();
     }
@@ -239,7 +239,7 @@ private:
             {
                 ret = ::MessageBox
                 (
-                    nullptr, TEXT("ìØÇ∂ÉLÅ[Ç™ìoò^Ç≥ÇÍÇƒÇ¢Ç‹Ç∑"),
+                    nullptr, TEXT("Âêå„Åò„Ç≠„Éº„ÅåÁôªÈå≤„Åï„Çå„Å¶„ÅÑ„Åæ„Åô"),
                     PLUGIN_NAME, MB_RETRYCANCEL
                 );
                 if ( ret == IDRETRY )
@@ -300,6 +300,15 @@ private:
     {
         if ( index < 0 ) { return; }
 
+        const auto ret = ::MessageBox
+        (
+            nullptr, TEXT("ÂâäÈô§„Åó„Åæ„Åô„ÅãÔºü"), PLUGIN_NAME, MB_YESNO
+        );
+        if ( ret != IDYES )
+        {
+            return;
+        }
+
         auto&& commands = settings::get().commands;
 
         INT32 i = 0;
@@ -317,7 +326,7 @@ private:
 };
 
 //---------------------------------------------------------------------------//
-// ÉÜÅ[ÉeÉBÉäÉeÉBä÷êî
+// „É¶„Éº„ÉÜ„Ç£„É™„ÉÜ„Ç£Èñ¢Êï∞
 //---------------------------------------------------------------------------//
 
 PLUGIN_INFO* GetInfoByFilename(PLUGIN_INFO* infos[], LPCTSTR Filename)
@@ -389,7 +398,7 @@ void GetHotkeyString(INT32 key, TCHAR* buf, size_t buf_size)
 
     if ( mod_txt[0] == '\0' )
     {
-        ::StringCchCopy(buf, buf_size, TEXT("Ç»Çµ"));
+        ::StringCchCopy(buf, buf_size, TEXT("„Å™„Åó"));
     }
     else
     {
@@ -473,7 +482,7 @@ void ShowVKeyName(HWND hItem, INT16 vk)
 
     if ( vk_txt[0] == '\0' )
     {
-        ::SetWindowText(hItem, TEXT("(Ç»Çµ)"));
+        ::SetWindowText(hItem, TEXT("(„Å™„Åó)"));
     }
     else
     {
@@ -564,7 +573,7 @@ bool OpenFileDialog(TCHAR* buf, size_t buf_size)
 
     HRESULT hr;
 
-    // îOÇÃÇΩÇﬂ
+    // Âøµ„ÅÆ„Åü„ÇÅ
     hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if ( FAILED(hr) )
     {
@@ -606,7 +615,7 @@ bool OpenFileDialog(TCHAR* buf, size_t buf_size)
 }
 
 //---------------------------------------------------------------------------//
-// ÉRÅ[ÉãÉoÉbÉNä÷êî
+// „Ç≥„Éº„É´„Éê„ÉÉ„ÇØÈñ¢Êï∞
 //---------------------------------------------------------------------------//
 
 INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
