@@ -152,10 +152,12 @@ public:
         return wnd->WndProc(hwnd, uMsg, wp, lp);
     }
 
+public:
     LRESULT WndProc
     (
         HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
     )
+    override
     {
         return ::DefSubclassProc(hwnd, uMsg, wp, lp);
     }
@@ -251,7 +253,7 @@ public:
 public:
     HWND Create(DWORD style, HWND hwndParent, INT16 id)
     {
-        style |= WS_CHILD | WS_VISIBLE | WS_VSCROLL | CBS_DROPDOWNLIST;
+        style |= WS_CHILD | WS_VISIBLE | WS_VSCROLL;
 
         return super::Create(style, hwndParent, id);
     }
@@ -485,6 +487,7 @@ public:
     (
         HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
     )
+    override
     {
         switch ( uMsg )
         {
@@ -569,6 +572,7 @@ public:
     (
         HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
     )
+    override
     {
         switch ( uMsg )
         {

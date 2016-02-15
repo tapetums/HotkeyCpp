@@ -11,6 +11,7 @@
 #include <list>
 
 #include <windows.h>
+#include <strsafe.h>
 
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib") // PathRenameExtension
@@ -30,26 +31,32 @@ extern HINSTANCE g_hInst;
 
 struct command
 {
-    UINT32 key;
-    INT32  id;
-    TCHAR  filename [MAX_PATH];
-    TCHAR  param    [MAX_PATH];
+    INT32 key;
+    INT32 id;
+    TCHAR filename [MAX_PATH];
+    TCHAR param    [MAX_PATH];
 
     command()
     {
         key = 0;
-        id = -1;
+        id  = 0;
         filename[0] = param[0] = L'\0';
     }
 
-    command(const command&) = delete;
+    command(const command& lhs)             { copy(lhs); }
+    command& operator =(const command& lhs) { copy(lhs); return *this; }
 
-    command(command&& rhs) noexcept
+    command(command&& rhs)             noexcept { copy(rhs); }
+    command& operator =(command&& rhs) noexcept { copy(rhs); return *this; }
+
+    ~command() = default;
+
+    void copy(const command& lhs)
     {
-        key = rhs.key;
-        id  = rhs.id;
-        ::StringCchCopy(filename, MAX_PATH, rhs.filename);
-        ::StringCchCopy(param,    MAX_PATH, rhs.param);
+        key = lhs.key;
+        id  = lhs.id;
+        ::StringCchCopy(filename, MAX_PATH, lhs.filename);
+        ::StringCchCopy(param,    MAX_PATH, lhs.param);
     }
 };
 
@@ -78,6 +85,7 @@ private:
 inline settings::settings()
 {
     TCHAR path [MAX_PATH];
+    TCHAR name [MAX_PATH];
 
     // iniファイル名取得
     ::GetModuleFileName(g_hInst, path, MAX_PATH);
@@ -90,26 +98,31 @@ inline settings::settings()
     )
     ? true : false;
 
-    TCHAR num [16];
+    // ホットキー設定の読み込み
     for ( size_t idx = 0; ; ++idx )
     {
-        ::wsprintf(num,TEXT("%u"), idx);
-
         command cmd;
-        cmd.key = ::GetPrivateProfileInt(num,TEXT("key"), -1, path);
+
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_key"), idx);
+        cmd.key = ::GetPrivateProfileInt(TEXT("Hotkey"), name, -1, path);
         if ( cmd.key == -1 )
         {
             break;
         }
 
-        cmd.id = ::GetPrivateProfileInt(num,TEXT("id"), 0, path);
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_id"), idx);
+        cmd.id = ::GetPrivateProfileInt(TEXT("Hotkey"), name, 0, path);
+
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_filename"), idx);
         ::GetPrivateProfileString
         (
-            num,TEXT("filename"),TEXT(""), cmd.filename, MAX_PATH, path
+            TEXT("Hotkey"), name, TEXT(""), cmd.filename, MAX_PATH, path
         );
+
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_param"), idx);
         ::GetPrivateProfileString
         (
-            num,TEXT("param"),TEXT(""), cmd.param, MAX_PATH, path
+            TEXT("Hotkey"), name, TEXT(""), cmd.param, MAX_PATH, path
         );
 
         bool already_reged = false;
@@ -132,6 +145,7 @@ inline settings::settings()
 inline settings::~settings()
 {
     TCHAR path [MAX_PATH];
+    TCHAR name [MAX_PATH];
     TCHAR buf  [16];
 
     // iniファイル名取得
@@ -139,24 +153,29 @@ inline settings::~settings()
     ::PathRenameExtension(path,TEXT(".ini"));
 
     // パラメータの書き出し
-    ::wsprintf(buf,TEXT("%i"), enable);
+    ::StringCchPrintf(buf, MAX_PATH, TEXT("%i"), enable);
     ::WritePrivateProfileString(TEXT("Setting"),TEXT("enable"), buf, path);
 
+    //セクションの削除
+    ::WritePrivateProfileString(TEXT("Hotkey"), nullptr, nullptr, path);
+
+    // ホットキー設定の書き出し
     size_t idx = 0;
-    TCHAR num [16];
     for ( auto&& cmd: commands )
     {
-        ::wsprintf(num,TEXT("%u"), idx);
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_key"), idx);
+        ::StringCchPrintf(buf, MAX_PATH, TEXT("%u"), cmd.key);
+        ::WritePrivateProfileString(TEXT("Hotkey"), name, buf, path);
 
-        ::wsprintf(buf,TEXT("%u"), cmd.key);
-        ::WritePrivateProfileString(num,TEXT("key"), buf, path);
-        WriteLog(elDebug, TEXT("%s: %i"), PLUGIN_NAME, cmd.id);
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_id"), idx);
+        ::StringCchPrintf(buf, MAX_PATH, TEXT("%i"), cmd.id);
+        ::WritePrivateProfileString(TEXT("Hotkey"), name, buf, path);
 
-        ::wsprintf(buf,TEXT("%i"), cmd.id);
-        ::WritePrivateProfileString(num,TEXT("id"), buf, path);
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_filename"), idx);
+        ::WritePrivateProfileString(TEXT("Hotkey"), name, cmd.filename, path);
 
-        ::WritePrivateProfileString(num,TEXT("filename"), cmd.filename, path);
-        ::WritePrivateProfileString(num,TEXT("param"), cmd.param, path);
+        ::StringCchPrintf(name, MAX_PATH, TEXT("%03u_param"), idx);
+        ::WritePrivateProfileString(TEXT("Hotkey"), name, cmd.param, path);
 
         ++idx;
     }

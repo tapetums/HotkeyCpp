@@ -2,6 +2,7 @@
 // Microsoft Visual C++ で生成されたインクルード ファイル。
 // TTBasePlugin.rc で使用
 //
+
 #include <windows.h>
 
 #define SW_HIDE                         0
@@ -789,31 +790,44 @@
 #define VK_NUMPAD5                      0x65
 #define LANG_DIVEHI                     0x65
 #define IDD_DIALOG1                     101
+#define IDC_FILE                        101
 #define VK_NUMPAD6                      0x66
+#define IDC_CMD                         102
 #define VK_NUMPAD7                      0x67
 #define LANG_FULAH                      0x67
 #define LANG_PULAR                      0x67
 #define IDD_DIALOG2                     103
 #define IDD_DIALOG_EDIT                 103
+#define IDC_EDIT1                       103
 #define VK_NUMPAD8                      0x68
 #define LANG_HAUSA                      0x68
 #define VK_NUMPAD9                      0x69
+#define IDC_EDIT3                       105
 #define VK_MULTIPLY                     0x6A
 #define LANG_YORUBA                     0x6a
+#define IDC_EDIT4                       106
 #define VK_ADD                          0x6B
 #define LANG_QUECHUA                    0x6b
+#define IDC_CHECK1                      107
 #define VK_SEPARATOR                    0x6C
 #define LANG_SOTHO                      0x6c
+#define IDC_CHECK2                      108
 #define VK_SUBTRACT                     0x6D
 #define LANG_BASHKIR                    0x6d
+#define IDC_CHECK3                      109
 #define VK_DECIMAL                      0x6E
 #define LANG_LUXEMBOURGISH              0x6e
+#define IDC_CHECK4                      110
 #define VK_DIVIDE                       0x6F
 #define LANG_GREENLANDIC                0x6f
+#define IDC_SPIN1                       111
 #define VK_F1                           0x70
 #define LANG_IGBO                       0x70
+#define IDC_SPIN2                       112
 #define VK_F2                           0x71
+#define IDC_EDIT5                       113
 #define VK_F3                           0x72
+#define IDC_EDIT6                       114
 #define VK_F4                           0x73
 #define LANG_TIGRIGNA                   0x73
 #define LANG_TIGRINYA                   0x73
@@ -1211,6 +1225,7 @@
 #define WM_PENWINFIRST                  0x0380
 #define WM_PENWINLAST                   0x038F
 #define WM_DDE_FIRST                    0x03E0
+#define IDC_COMBO1                      104
 #define CF_GDIOBJLAST                   0x03FF
 #define _WIN32_WINNT_NT4                0x0400
 #define _WIN32_IE_IE40                  0x0400
@@ -1559,15 +1574,6 @@
 #define SPVERSION_MASK                  0x0000FF00
 #define UNICODE_NOCHAR                  0xFFFF
 #define IDC_STATIC                      -1
-#define ID_FILE                         101
-#define ID_CMD                          102
-#define IDC_EDIT1                       103
-#define IDC_EDIT2                       104
-#define IDC_EDIT3                       105
-#define IDC_CHECK1                      106
-#define IDC_CHECK2                      107
-#define IDC_CHECK3                      108
-#define IDC_CHECK4                      109
 
 // Next default values for new objects
 // 
@@ -1575,7 +1581,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_CONTROL_VALUE         1003
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
