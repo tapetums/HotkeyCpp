@@ -770,6 +770,15 @@ bool OpenFileDialog
         return false;
     }
 
+    constexpr COMDLG_FILTERSPEC FileTypes[] =
+    {
+        { L"実行ファイル",   L"*.exe;*.com;*.bat" },
+        { L"スクリプト",     L"*.wsh;*.ps;*.vbs;*.js;*.py;*.rb;*.pl;*.php" },
+        { L"全てのファイル", L"*.*" }
+    };
+
+    fd->SetFileTypes(3, FileTypes);
+
     hr = fd->Show(nullptr);
     if ( FAILED(hr) )
     {
