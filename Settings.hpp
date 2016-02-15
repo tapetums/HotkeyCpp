@@ -13,9 +13,6 @@
 #include <windows.h>
 #include <strsafe.h>
 
-#include <shlwapi.h>
-#pragma comment(lib, "shlwapi.lib") // PathRenameExtension
-
 #include "Plugin.hpp"
 
 //---------------------------------------------------------------------------//
@@ -88,8 +85,10 @@ inline settings::settings()
     TCHAR name [MAX_PATH];
 
     // iniファイル名取得
-    ::GetModuleFileName(g_hInst, path, MAX_PATH);
-    ::PathRenameExtension(path,TEXT(".ini"));
+    const auto len = ::GetModuleFileName(g_hInst, path, MAX_PATH);
+    path[len - 3] = 'i';
+    path[len - 2] = 'n';
+    path[len - 1] = 'i';
 
     // パラメータの取得
     enable = ::GetPrivateProfileInt
@@ -149,8 +148,10 @@ inline settings::~settings()
     TCHAR buf  [16];
 
     // iniファイル名取得
-    ::GetModuleFileName(g_hInst, path, MAX_PATH);
-    ::PathRenameExtension(path,TEXT(".ini"));
+    const auto len = ::GetModuleFileName(g_hInst, path, MAX_PATH);
+    path[len - 3] = 'i';
+    path[len - 2] = 'n';
+    path[len - 1] = 'i';
 
     // パラメータの書き出し
     ::StringCchPrintf(buf, MAX_PATH, TEXT("%i"), enable);
