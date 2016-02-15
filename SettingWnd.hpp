@@ -34,16 +34,16 @@ class SettingWnd;
 INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
 
 PLUGIN_INFO* GetInfoByFilename(PLUGIN_INFO** infos, LPCTSTR Filename);
-INT32 GetCommandIndex (const PLUGIN_INFO* info, INT32 CmdID);
-void  GetHotkeyString (INT32 key, TCHAR* buf, size_t buf_size);
-void  GetCommandString(LPCTSTR Filename, INT32 CmdID, TCHAR* buf, size_t buf_size);
-void  CheckVKeyItem   (HWND hwnd, INT16 mod);
-void  ShowVKeyName    (HWND hItem, INT16 vk);
-void  SetVKey         (command* pcmd, INT32 delta);
-void  SetCommandID    (command* pcmd, INT32 delta);
-void  ShowVKeyName    (HWND hwnd, command* pcmd);
-void  ShowCommandName (HWND hwnd, command* pcmd);
-bool  OpenFileDialog  (TCHAR* buf, size_t buf_size);
+INT32 GetCommandIndex   (const PLUGIN_INFO* info, INT32 CmdID);
+void  GetHotkeyString   (INT32 key, TCHAR* buf, size_t buf_size);
+void  GetCommandString  (LPCTSTR Filename, INT32 CmdID, TCHAR* buf, size_t buf_size);
+void  CheckVKeyItem     (HWND hwnd, INT16 mod);
+void  ShowVKeyName      (HWND hItem, INT16 vk);
+void  SetVKey           (command* pcmd, INT32 delta);
+void  SetCommandID      (command* pcmd, INT32 delta);
+void  ShowVKeyName      (HWND hwnd, command* pcmd);
+void  ShowCommandCaption(HWND hwnd, command* pcmd);
+bool  OpenFileDialog    (TCHAR* buf, size_t buf_size);
 
 //---------------------------------------------------------------------------//
 // クラス
@@ -69,8 +69,10 @@ public:
 public:
     SettingWnd()
     {
+        // フォントを生成
         font.create(16, TEXT("Meiryo UI"), FW_REGULAR);
 
+        // ウィンドウを生成
         const auto hwnd = Create
         (
             PLUGIN_NAME, WS_CAPTION | WS_SYSMENU, 0, nullptr, nullptr
@@ -78,6 +80,7 @@ public:
         Resize(480, 320);
         SetFont(font);
 
+        // 子コントロールを生成
         auto style = WS_VSCROLL | WS_HSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL;
         auto styleEx = LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_HEADERDRAGDROP;
         list_cmd.Create(style, styleEx, hwnd, CTRL::LIST_COMMAND);
@@ -104,6 +107,7 @@ public:
         btn_edit.SetText(TEXT("編集"));
         btn_del. SetText(TEXT("削除"));
 
+        // コマンドリストを更新
         MakeCommandList();
     }
 
@@ -140,15 +144,15 @@ private:
 
     LRESULT OnCommand(HWND hwnd, INT16 wID)
     {
-        if ( wID == CTRL::BTN_ADD )
+        if ( wID == CTRL::BTN_ADD ) // 追加
         {
             AddItem(hwnd);
         }
-        else if ( wID == CTRL::BTN_EDIT )
+        else if ( wID == CTRL::BTN_EDIT )// 編集
         {
             EditItem(hwnd, list_cmd.SelectedIndex());
         }
-        else if ( wID == CTRL::BTN_DEL )
+        else if ( wID == CTRL::BTN_DEL ) // 削除
         {
             DeleteItem(list_cmd.SelectedIndex());
         }
@@ -159,6 +163,7 @@ private:
     {
         if ( pNMHdr->idFrom == CTRL::LIST_COMMAND && pNMHdr->code == NM_DBLCLK )
         {
+            // リストをダブルクリックしたとき
             const auto index = list_cmd.SelectedIndex();
             if ( index < 0 )
             {
@@ -207,8 +212,9 @@ private:
         INT_PTR ret;
         command cmd;
 
-        while ( true )
+        while ( true ) // キー重複の時にやり直しができるよう ループにしておく
         {
+            // コマンド編集ダイアログを表示
             ret = ::DialogBoxParam
             (
                 g_hInst, MAKEINTRESOURCE(IDD_DIALOG_EDIT),
@@ -221,6 +227,7 @@ private:
 
             auto&& commands = settings::get().commands;
 
+            // キーが重複していないかチェック
             bool already_reged = false;
             for ( const auto& cmd_reged: commands )
             {
@@ -238,14 +245,15 @@ private:
                 );
                 if ( ret == IDRETRY )
                 {
-                    continue;
+                    continue; // もう一回編集画面を出す
                 }
                 else
                 {
-                    break;
+                    break; // 登録を諦める
                 }
             }
 
+            // コマンドを登録
             commands.push_back(std::move(cmd));
             ClearCommandList();
             MakeCommandList();
@@ -260,6 +268,7 @@ private:
 
         auto&& commands = settings::get().commands;
 
+        // リストからインデックスで検索
         INT32    i    { 0 };
         command* pcmd { nullptr };
         for ( auto&& cmd: commands )
@@ -272,10 +281,11 @@ private:
         }
         if ( nullptr == pcmd )
         {
-            return;
+            return; // ここには来ないはず…
         }
 
-        auto cmd = *pcmd;// コピーをとる
+        // コマンド編集ダイアログを表示
+        auto cmd = *pcmd; // 今の項目のコピーをとる
         const auto ret = ::DialogBoxParam
         (
             g_hInst, MAKEINTRESOURCE(IDD_DIALOG_EDIT),
@@ -286,6 +296,7 @@ private:
             *pcmd = cmd; // 書き戻す
         }
 
+        // リストを再表示
         ClearCommandList();
         MakeCommandList();
     }
@@ -310,9 +321,13 @@ private:
         {
             if ( i == index )
             {
+                // リストから削除
                 commands.erase(it);
+
+                // リストを再表示
                 ClearCommandList();
                 MakeCommandList();
+
                 break;
             }
         }
@@ -334,15 +349,21 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             HWND hItem;
             TCHAR buf [MAX_PATH];
 
+            // 編集すべきコマンドを取得
+            //  グローバル変数なことに注意!! これはモーダルダイアログです
             pcmd = (command*)lp;
 
+            // キーの名前を表示
             ShowVKeyName(hwnd, pcmd);
 
+            // Ctrl や Win キーなどの設定状態を表示
             CheckVKeyItem(hwnd, HIBYTE(pcmd->key));
 
+            // コマンドのパスを表示
             hItem = ::GetDlgItem(hwnd, IDC_COMBO1);
             ::SetWindowText(hItem, pcmd->filename);
 
+            // プラグインの一覧をコンボボックスに登録
             const auto infos = TTBPlugin_GetAllPluginInfo();
             for ( size_t index = 0; ; ++index )
             {
@@ -353,13 +374,16 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             }
             TTBPlugin_FreePluginInfoArray(infos);
 
+            // コマンド引数を表示
             hItem = ::GetDlgItem(hwnd, IDC_EDIT3);
             ::SetWindowText(hItem, pcmd->param);
 
+            // コマンドIDを表示
             ::StringCchPrintf(buf, MAX_PATH, TEXT("%i"), pcmd->id);
             hItem = ::GetDlgItem(hwnd, IDC_EDIT4);
             ::SetWindowText(hItem, buf);
 
+            // スピンコントロールをコマンドIDのエディットコントロールと紐付け
             hItem = ::GetDlgItem(hwnd, IDC_SPIN2);
             ::SendMessage
             (
@@ -370,9 +394,8 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
                 hItem, UDM_SETBUDDY, (WPARAM)::GetDlgItem(hwnd, IDC_EDIT4), 0
             );
 
-            ShowCommandName(hwnd, pcmd);
-
-            ::SetFocus(::GetDlgItem(hwnd, IDC_EDIT1));
+            // コマンドのキャプションを表示
+            ShowCommandCaption(hwnd, pcmd);
 
             return TRUE;
         }
@@ -382,19 +405,22 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
             if ( wID == IDOK )
             {
+                // 終了して変更を反映
                 ::EndDialog(hwnd, IDOK);
             }
             else if ( wID == IDC_FILE )
             {
+                // ファイル選択ダイアログを表示
                 OpenFileDialog(pcmd->filename, MAX_PATH);
 
                 const auto hItem = ::GetDlgItem(hwnd, IDC_COMBO1);
                 ::SetWindowText(hItem, pcmd->filename);
 
-                ShowCommandName(hwnd, pcmd);
+                ShowCommandCaption(hwnd, pcmd);
             }
             else if ( wID == IDC_COMBO1 )
             {
+                // コマンド名の変更を反映
                 const auto hItem = ::GetDlgItem(hwnd, IDC_COMBO1);
 
                 const auto code = HIWORD(wp);
@@ -407,16 +433,17 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
                     (
                         hItem, CB_GETLBTEXT, index, (LPARAM)pcmd->filename
                     );
-                    ShowCommandName(hwnd, pcmd);
+                    ShowCommandCaption(hwnd, pcmd);
                 }
                 else if ( code == CBN_EDITCHANGE )
                 {
                     ::GetWindowText(hItem, pcmd->filename, MAX_PATH);
-                    ShowCommandName(hwnd, pcmd);
+                    ShowCommandCaption(hwnd, pcmd);
                 }
             }
             else if ( wID == IDC_EDIT3 )
             {
+                // コマンド引数の変更を反映
                 const auto code = HIWORD(wp);
                 if ( code != EN_CHANGE ) { return TRUE; }
 
@@ -425,44 +452,50 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             }
             else if ( wID == IDC_CHECK1 )
             {
-                pcmd->key ^= (HOTKEYF_CONTROL << 8);
+                pcmd->key ^= (HOTKEYF_CONTROL << 8); // Ctrl
             }
             else if ( wID == IDC_CHECK2 )
             {
-                pcmd->key ^= (HOTKEYF_SHIFT << 8);
+                pcmd->key ^= (HOTKEYF_SHIFT << 8); // Shift
             }
             else if ( wID == IDC_CHECK3 )
             {
-                pcmd->key ^= (HOTKEYF_ALT << 8);
+                pcmd->key ^= (HOTKEYF_ALT << 8); // Alt
             }
             else if ( wID == IDC_CHECK4 )
             {
-                pcmd->key ^= (HOTKEYF_WIN << 8);
+                pcmd->key ^= (HOTKEYF_WIN << 8); // Win
             }
+
+            // コマンドID は スピンコントロールから自動的に反映される
 
             return TRUE;
         }
         case WM_NOTIFY:
         {
+            // スピンコントロールの変更を反映
             const auto pNMhdr = LPNMHDR(lp);
             if ( pNMhdr->code != UDN_DELTAPOS ) { return TRUE; }
 
             const auto pNMud = LPNMUPDOWN(lp);
             if ( pNMud->hdr.hwndFrom == ::GetDlgItem(hwnd, IDC_SPIN1) )
             {
+                // キーの名前を表示
                 SetVKey(pcmd, pNMud->iDelta);
                 ShowVKeyName(hwnd, pcmd);
             }
             else if ( pNMud->hdr.hwndFrom == ::GetDlgItem(hwnd, IDC_SPIN2) )
             {
+                // コマンドのキャプションを表示
                 SetCommandID(pcmd, pNMud->iDelta);
-                ShowCommandName(hwnd, pcmd);
+                ShowCommandCaption(hwnd, pcmd);
             }
 
             return TRUE;
         }
         case WM_CLOSE:
         {
+            // 終了して変更を破棄
             ::EndDialog(hwnd, IDCANCEL);
             return TRUE;
         }
@@ -530,29 +563,32 @@ void GetHotkeyString
     mod_txt[0] = '\0';
     vk_txt[0]  = '\0';
 
+    // 合成キーの文字列を取得
     const auto mod = HIBYTE(key);
-    if ( mod & HOTKEYF_CONTROL )
+    if ( mod & HOTKEYF_CONTROL ) // Ctrl
     {
         ::StringCchCat(mod_txt, 64, TEXT("Ctrl + "));
     }
-    if ( mod & HOTKEYF_SHIFT )
+    if ( mod & HOTKEYF_SHIFT ) // Shift
     {
         ::StringCchCat(mod_txt, 64, TEXT("Shift + "));
     }
-    if ( mod & HOTKEYF_ALT )
+    if ( mod & HOTKEYF_ALT ) // Alt
     {
         ::StringCchCat(mod_txt, 64, TEXT("Alt + "));
     }
-    if ( mod & HOTKEYF_WIN )
+    if ( mod & HOTKEYF_WIN ) // Win
     {
         ::StringCchCat(mod_txt, 64, TEXT("Win + "));
     }
 
+    // 仮想キーの文字列を取得
     const auto vk = LOBYTE(key);
     const auto sc = ::MapVirtualKey(vk, MAPVK_VK_TO_VSC);
     ::GetKeyNameText((sc << 16), vk_txt, MAX_PATH);
     ::StringCchCat(mod_txt, MAX_PATH, vk_txt);
 
+    // 合成キー名と仮想キー名を連結
     if ( mod_txt[0] == '\0' )
     {
         ::StringCchCopy(buf, buf_size, TEXT("(なし)"));
@@ -596,7 +632,7 @@ void GetCommandString
         );
     }
 
-    TTBPlugin_FreePluginInfoArray(infos);
+    TTBPlugin_FreePluginInfoArray(infos); // <- 忘れるとメモリリーク
 }
 
 //---------------------------------------------------------------------------//
@@ -726,7 +762,7 @@ void ShowVKeyName
 
 //---------------------------------------------------------------------------//
 
-void ShowCommandName
+void ShowCommandCaption
 (
     HWND hwnd, command* pcmd
 )
@@ -750,13 +786,14 @@ bool OpenFileDialog
 
     HRESULT hr;
 
-    // 念のため
+    // 念のため COM を初期化
     hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if ( FAILED(hr) )
     {
         return false;
     }
 
+    // COM オブジェクトを取得
     ComPtr<IFileDialog> fd;
     hr = ::CoCreateInstance
     (
@@ -770,21 +807,23 @@ bool OpenFileDialog
         return false;
     }
 
+    // ファイルフィルタを設定
     constexpr COMDLG_FILTERSPEC FileTypes[] =
     {
         { L"実行ファイル",   L"*.exe;*.com;*.bat" },
         { L"スクリプト",     L"*.wsh;*.ps;*.vbs;*.js;*.py;*.rb;*.pl;*.php" },
         { L"全てのファイル", L"*.*" }
     };
-
     fd->SetFileTypes(3, FileTypes);
 
+    // ダイアログの表示
     hr = fd->Show(nullptr);
     if ( FAILED(hr) )
     {
         return false;
     }
 
+    // 選択項目を取得
     ComPtr<IShellItem> item;
     hr = fd->GetResult(&item);
     if ( FAILED(hr) )
@@ -792,6 +831,7 @@ bool OpenFileDialog
         return false;
     }
 
+    // バッファにコピー
     LPWSTR pszFilePath;
     hr = item->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
     ::StringCchCopy(buf, buf_size, pszFilePath);
