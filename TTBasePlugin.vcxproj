@@ -322,6 +322,7 @@
   <ItemGroup>
     <ClInclude Include="include\CtrlWnd.hpp" />
     <ClInclude Include="include\Font.hpp" />
+    <ClInclude Include="include\Transcode.hpp" />
     <ClInclude Include="include\UWnd.hpp" />
     <ClInclude Include="Main.hpp" />
     <ClInclude Include="MessageDef.hpp" />

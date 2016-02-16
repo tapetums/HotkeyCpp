@@ -24,6 +24,7 @@
 #endif
 
 #include "Plugin.hpp"
+#include "Settings.hpp"
 #include "Main.hpp"
 
 #ifndef HOTKEYF_WIN
@@ -39,6 +40,7 @@ class SettingWnd;
 INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK SubclassProc(HWND, UINT, WPARAM, LPARAM, UINT_PTR, DWORD_PTR);
 
+const command* const GetCommandByIndex(INT32 index);
 PLUGIN_INFO* GetInfoByFilename(PLUGIN_INFO** infos, LPCTSTR Filename);
 INT32 GetCommandIndex   (const PLUGIN_INFO* info, INT32 CmdID);
 void  GetHotkeyString   (INT32 key, TCHAR* buf, size_t buf_size);
@@ -47,7 +49,7 @@ void  CheckVKeyItem     (HWND hwnd, INT16 mod);
 void  ShowVKeyString    (HWND hItem, INT16 vk);
 void  SetVKey           (command* pcmd, INT32 delta);
 void  SetCommandID      (command* pcmd, INT32 delta);
-void  ShowVKeyName      (HWND hwnd, command* pcmd);
+void  ShowVKeyValue     (HWND hwnd, command* pcmd);
 void  ShowCommandCaption(HWND hwnd, command* pcmd);
 bool  OpenFileDialog    (TCHAR* buf, size_t buf_size);
 
@@ -93,9 +95,9 @@ public:
         list_cmd.Bounds(4, 4, 472, 280);
         list_cmd.SetFont(font);
         list_cmd.InsertColumn(TEXT("keys"),    140, 0);
-        list_cmd.InsertColumn(TEXT("command"), 180, 1);
+        list_cmd.InsertColumn(TEXT("command"), 280, 1);
         list_cmd.InsertColumn(TEXT("ID"),       34, 2);
-        list_cmd.InsertColumn(TEXT("param"),   100, 3);
+        list_cmd.InsertColumn(TEXT("param"),     0, 3);
 
         btn_add. Create(BS_PUSHBUTTON, hwnd, CTRL::BTN_ADD);
         btn_edit.Create(BS_PUSHBUTTON, hwnd, CTRL::BTN_EDIT);
@@ -115,14 +117,18 @@ public:
 
         // コマンドリストを更新
         MakeCommandList();
+        if ( settings::get().enable )
+        {
+            RegisterAllHotkeys(hwnd);
+        }
     }
 
 public:
-    LRESULT WndProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) override
+    LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) override
     {
-        if ( uMsg == WM_CREATE )
+        if ( uMsg == WM_DESTROY )
         {
-            return OnCreate(hwnd);
+            return OnDestory(hwnd);
         }
         else if ( uMsg == WM_CLOSE )
         {
@@ -136,6 +142,10 @@ public:
         {
             return OnNotify(hwnd, LOWORD(wp), LPNMHDR(lp));
         }
+        else if ( uMsg == WM_HOTKEY )
+        {
+            return OnHotkey(hwnd, INT32(wp), LOWORD(lp), HIWORD(lp));
+        }
         else
         {
             return ::DefWindowProc(hwnd, uMsg, wp, lp);
@@ -143,8 +153,10 @@ public:
     }
 
 private:
-    LRESULT OnCreate(HWND)
+    LRESULT CALLBACK OnDestory(HWND hwnd)
     {
+        // ホットキーの登録を解除
+        UnregisterAllHotkeys(hwnd);
         return 0;
     }
 
@@ -160,12 +172,12 @@ private:
         }
         else if ( wID == CTRL::BTN_DEL ) // 削除
         {
-            DeleteItem(list_cmd.SelectedIndex());
+            DeleteItem(hwnd, list_cmd.SelectedIndex());
         }
         return 0;
     }
 
-    LRESULT OnNotify(HWND hwnd, INT32, NMHDR* pNMHdr)
+    LRESULT CALLBACK OnNotify(HWND hwnd, INT32, NMHDR* pNMHdr)
     {
         if ( pNMHdr->idFrom == CTRL::LIST_COMMAND && pNMHdr->code == NM_DBLCLK )
         {
@@ -180,6 +192,35 @@ private:
                 EditItem(hwnd, index);
             }
         }
+
+        return 0;
+    }
+
+    LRESULT CALLBACK OnHotkey
+    (
+        HWND, INT32 idHotKey, WORD, WORD
+    )
+    {
+        // リストからコマンドを検索
+        auto pcmd = GetCommandByIndex(idHotKey);
+        if ( nullptr == pcmd )
+        {
+            return 0;
+        }
+
+        // コマンドを実行
+        const auto ret = TTBPlugin_ExecuteCommand(pcmd->filename, pcmd->id);
+        if ( ret )
+        {
+            return 0; // OK
+        }
+
+        // 実行ファイルを実行
+        ::ShellExecute
+        (
+            nullptr, TEXT("open"),
+            pcmd->filename, pcmd->param, nullptr, SW_SHOW
+        );
 
         return 0;
     }
@@ -260,9 +301,16 @@ private:
             }
 
             // コマンドを登録
+            UnregisterAllHotkeys(hwnd);
             commands.push_back(std::move(cmd));
+
             ClearCommandList();
             MakeCommandList();
+
+            if ( settings::get().enable )
+            {
+                RegisterAllHotkeys(hwnd);
+            }
 
             break;
         }
@@ -303,11 +351,17 @@ private:
         }
 
         // リストを再表示
+        UnregisterAllHotkeys(hwnd);
+
         ClearCommandList();
         MakeCommandList();
+        if ( settings::get().enable )
+        {
+            RegisterAllHotkeys(hwnd);
+        }
     }
 
-    void DeleteItem(INT32 index)
+    void DeleteItem(HWND hwnd, INT32 index)
     {
         if ( index < 0 ) { return; }
 
@@ -328,11 +382,17 @@ private:
             if ( i == index )
             {
                 // リストから削除
+                UnregisterAllHotkeys(hwnd);
                 commands.erase(it);
 
                 // リストを再表示
                 ClearCommandList();
                 MakeCommandList();
+
+                if ( settings::get().enable )
+                {
+                    RegisterAllHotkeys(hwnd);
+                }
 
                 break;
             }
@@ -359,8 +419,8 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             // グローバル変数なことに注意!! これはモーダルダイアログです
             pcmd  = (command*)lp;
 
-            // キーの名前を表示
-            ShowVKeyName(hwnd, pcmd);
+            // キーの値を表示
+            ShowVKeyValue(hwnd, pcmd);
 
             // Ctrl や Win キーなどの設定状態を表示
             CheckVKeyItem(hwnd, HIBYTE(pcmd->key));
@@ -414,7 +474,6 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
             if ( wID == IDOK )
             {
-
                 // 終了して変更を反映
                 ::EndDialog(hwnd, IDOK);
             }
@@ -490,9 +549,9 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             const auto pNMud = LPNMUPDOWN(lp);
             if ( pNMud->hdr.hwndFrom == ::GetDlgItem(hwnd, IDC_SPIN1) )
             {
-                // キーの名前を表示
+                // キーの値を表示
                 SetVKey(pcmd, pNMud->iDelta);
-                ShowVKeyName(hwnd, pcmd);
+                ShowVKeyValue(hwnd, pcmd);
             }
             else if ( pNMud->hdr.hwndFrom == ::GetDlgItem(hwnd, IDC_SPIN2) )
             {
@@ -509,8 +568,12 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             pcmd->key &= 0xFF00;
             pcmd->key |= vk;
 
+            // キーの名前を表示
             const auto hItem = ::GetDlgItem(hwnd, IDC_EDIT1);
             ShowVKeyString(hItem, vk);
+
+            // キーの値を表示
+            ShowVKeyValue(hwnd, pcmd);
 
             return TRUE;
         }
@@ -547,6 +610,25 @@ LRESULT CALLBACK SubclassProc
 
 //---------------------------------------------------------------------------//
 // ユーティリティ関数
+//---------------------------------------------------------------------------//
+
+const command* const GetCommandByIndex(INT32 index)
+{
+    const auto& commands = settings::get().commands;
+
+    INT32 i = 0;
+    for ( auto&& cmd: commands )
+    {
+        if ( i == index )
+        {
+            return &cmd;
+        }
+        ++i;
+    }
+
+    return nullptr;
+}
+
 //---------------------------------------------------------------------------//
 
 PLUGIN_INFO* GetInfoByFilename
@@ -654,22 +736,24 @@ void GetCommandString
     {
         ::StringCchCopy(buf, buf_size, Filename);
     }
-
-    const auto cmd_idx = GetCommandIndex(info, CmdID);
-    if ( cmd_idx < 0 )
-    {
-        ::StringCchPrintf
-        (
-            buf, buf_size, TEXT("%s - ?"), info ? info->Name : TEXT("?")
-        );
-    }
     else
     {
-        ::StringCchPrintf
-        (
-            buf, buf_size, TEXT("%s - %s"),
-            info->Name, info->Commands[cmd_idx].Caption
-        );
+        const auto cmd_idx = GetCommandIndex(info, CmdID);
+        if ( cmd_idx < 0 )
+        {
+            ::StringCchPrintf
+            (
+                buf, buf_size, TEXT("%s - ?"), info ? info->Name : TEXT("?")
+            );
+        }
+        else
+        {
+            ::StringCchPrintf
+            (
+                buf, buf_size, TEXT("%s - %s"),
+                info->Name, info->Commands[cmd_idx].Caption
+            );
+        }
     }
 
     TTBPlugin_FreePluginInfoArray(infos); // <- 忘れるとメモリリーク
@@ -784,7 +868,7 @@ void SetCommandID
 
 //---------------------------------------------------------------------------//
 
-void ShowVKeyName
+void ShowVKeyValue
 (
     HWND hwnd, command* pcmd
 )

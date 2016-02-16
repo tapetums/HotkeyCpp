@@ -734,7 +734,7 @@ bool tapetums::UWnd::ShowNotifyIconInfo
 // UWnd ウィンドウプロシージャ
 //---------------------------------------------------------------------------//
 
-LRESULT tapetums::UWnd::WndProc
+LRESULT CALLBACK tapetums::UWnd::WndProc
 (
     HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
 )

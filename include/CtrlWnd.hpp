@@ -110,7 +110,7 @@ public:
     }
 
 public:
-    static LRESULT WINAPI SubclassWndProc
+    static LRESULT CALLBACK SubclassWndProc
     (
         HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp,
         UINT_PTR /*uIdSubclass*/, DWORD_PTR dwRefData
@@ -153,7 +153,7 @@ public:
     }
 
 public:
-    LRESULT WndProc
+    LRESULT CALLBACK WndProc
     (
         HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
     )
@@ -483,7 +483,7 @@ public:
     }
 
 public:
-    LRESULT WndProc
+    LRESULT CALLBACK WndProc
     (
         HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
     )
@@ -568,7 +568,7 @@ public:
     }
 
 public:
-    LRESULT WndProc
+    LRESULT CALLBACK WndProc
     (
         HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp
     )
