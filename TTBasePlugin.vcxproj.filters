@@ -36,6 +36,9 @@
     <ClCompile Include="include\UWnd.cpp">
       <Filter>Source Files\include</Filter>
     </ClCompile>
+    <ClCompile Include="SettingWnd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Main.hpp">

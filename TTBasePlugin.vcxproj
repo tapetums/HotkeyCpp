@@ -314,6 +314,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MessageDef.cpp" />
     <ClCompile Include="Plugin.cpp" />
+    <ClCompile Include="SettingWnd.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
