@@ -61,25 +61,24 @@ struct command
 // Class
 //---------------------------------------------------------------------------//
 
-class settings
+class Settings
 {
-public:
-    static settings& get() { static settings s; return s; }
-
 public:
     bool enable;
     std::list<command> commands;
 
-private:
-    settings();
-    ~settings();
+public:
+    Settings();
+    ~Settings();
 };
+
+extern Settings* settings;
 
 //---------------------------------------------------------------------------//
 // Methods
 //---------------------------------------------------------------------------//
 
-inline settings::settings()
+inline Settings::Settings()
 {
     TCHAR path [MAX_PATH];
     TCHAR name [MAX_PATH];
@@ -141,7 +140,7 @@ inline settings::settings()
 
 //---------------------------------------------------------------------------//
 
-inline settings::~settings()
+inline Settings::~Settings()
 {
     TCHAR path [MAX_PATH];
     TCHAR name [MAX_PATH];

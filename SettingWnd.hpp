@@ -24,6 +24,7 @@
 #endif
 
 #include "Plugin.hpp"
+#include "Utility.hpp"
 #include "Settings.hpp"
 #include "Main.hpp"
 
@@ -117,7 +118,7 @@ public:
 
         // コマンドリストを更新
         MakeCommandList();
-        if ( settings::get().enable )
+        if ( settings->enable )
         {
             RegisterAllHotkeys(hwnd);
         }
@@ -231,7 +232,7 @@ private:
         TCHAR buf [MAX_PATH];
 
         INT32 index = 0;
-        const auto& commands = settings::get().commands;
+        const auto& commands = settings->commands;
         for ( auto&& cmd: commands )
         {
             GetHotkeyString(cmd.key, buf, MAX_PATH);
@@ -272,7 +273,7 @@ private:
                 return;
             }
 
-            auto&& commands = settings::get().commands;
+            auto&& commands = settings->commands;
 
             // キーが重複していないかチェック
             bool already_reged = false;
@@ -307,7 +308,7 @@ private:
             ClearCommandList();
             MakeCommandList();
 
-            if ( settings::get().enable )
+            if ( settings->enable )
             {
                 RegisterAllHotkeys(hwnd);
             }
@@ -320,7 +321,7 @@ private:
     {
         if ( index < 0 ) { return; }
 
-        auto&& commands = settings::get().commands;
+        auto&& commands = settings->commands;
 
         // リストからインデックスで検索
         INT32    i    { 0 };
@@ -355,7 +356,7 @@ private:
 
         ClearCommandList();
         MakeCommandList();
-        if ( settings::get().enable )
+        if ( settings->enable )
         {
             RegisterAllHotkeys(hwnd);
         }
@@ -374,7 +375,7 @@ private:
             return;
         }
 
-        auto&& commands = settings::get().commands;
+        auto&& commands = settings->commands;
 
         INT32 i = 0;
         for ( auto it = commands.begin(); it != commands.end(); ++it, ++i )
@@ -389,7 +390,7 @@ private:
                 ClearCommandList();
                 MakeCommandList();
 
-                if ( settings::get().enable )
+                if ( settings->enable )
                 {
                     RegisterAllHotkeys(hwnd);
                 }
@@ -614,7 +615,7 @@ LRESULT CALLBACK SubclassProc
 
 const command* const GetCommandByIndex(INT32 index)
 {
-    const auto& commands = settings::get().commands;
+    const auto& commands = settings->commands;
 
     INT32 i = 0;
     for ( auto&& cmd: commands )
@@ -911,7 +912,7 @@ bool OpenFileDialog
     HRESULT hr;
 
     // 念のため COM を初期化
-    hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    hr = ::CoInitialize(nullptr);
     if ( FAILED(hr) )
     {
         return false;
@@ -928,17 +929,9 @@ bool OpenFileDialog
     );
     if ( FAILED(hr) )
     {
+        WriteLog(elError, TEXT("%s: Could not get COM object"), PLUGIN_NAME);
         return false;
     }
-
-    // ファイルフィルタを設定
-    constexpr COMDLG_FILTERSPEC FileTypes[] =
-    {
-        { L"実行ファイル",   L"*.exe;*.com;*.bat" },
-        { L"スクリプト",     L"*.wsh;*.ps;*.vbs;*.js;*.py;*.rb;*.pl;*.php" },
-        { L"全てのファイル", L"*.*" }
-    };
-    fd->SetFileTypes(3, FileTypes);
 
     // ダイアログの表示
     hr = fd->Show(nullptr);
@@ -952,12 +945,18 @@ bool OpenFileDialog
     hr = fd->GetResult(&item);
     if ( FAILED(hr) )
     {
+        WriteLog(elError, TEXT("%s: Could not get IFileDialog result"), PLUGIN_NAME);
         return false;
     }
 
     // バッファにコピー
     LPWSTR pszFilePath;
     hr = item->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+    if ( FAILED(hr) )
+    {
+        WriteLog(elError, TEXT("%s: Could not get file name "), PLUGIN_NAME);
+        return false;
+    }
 
   #if defined(_UNICODE) || defined(UNICODE)
     ::StringCchCopyW(buf, buf_size, pszFilePath);

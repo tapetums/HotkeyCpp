@@ -32,8 +32,8 @@ HINSTANCE g_hInst { nullptr };
 
 //---------------------------------------------------------------------------//
 
-// 設定ウィンドウ
-SettingWnd* wnd { nullptr };
+Settings*   settings { nullptr };
+SettingWnd* wnd      { nullptr };
 
 //---------------------------------------------------------------------------//
 
@@ -46,7 +46,7 @@ enum CMD : INT32
 //---------------------------------------------------------------------------//
 
 // プラグインの名前
-LPCTSTR PLUGIN_NAME { TEXT("HotKeyCpp") };
+LPCTSTR PLUGIN_NAME { TEXT("HotkeyCpp") };
 
 // コマンドの数
 DWORD COMMAND_COUNT { CMD_CUONT };
@@ -67,7 +67,7 @@ PLUGIN_COMMAND_INFO g_cmd_info[] =
         0                                                      // TimerCounter（未使用）                                                 
     },
     {
-        TEXT("HotKeyCpp Settings"),            // コマンド名（英名）
+        TEXT("HotkeyCpp Settings"),            // コマンド名（英名）
         TEXT("HotkeyCpp 設定"),                // コマンド説明（日本語）
         CMD_SETTINGS,                          // コマンドID
         0,                                     // Attr（未使用）
@@ -99,11 +99,19 @@ PLUGIN_INFO g_info =
 // TTBEvent_Init() の内部実装
 BOOL Init()
 {
+    // 設定オブジェクトの生成
+    if ( nullptr == settings )
+    {
+        settings = new Settings;
+    }
+
     // ウィンドウの生成
     if ( nullptr == wnd )
     {
         wnd = new SettingWnd;
     }
+
+    WriteLog(elInfo, TEXT("%s: %s"), PLUGIN_NAME, TEXT("Successfully initialized"));
     return TRUE;
 }
 
@@ -117,6 +125,14 @@ void Unload()
     {
         delete wnd; wnd = nullptr;
     }
+
+    // 設定オブジェクトの破棄
+    if ( settings )
+    {
+        delete settings; settings = nullptr;
+    }
+
+    WriteLog(elInfo, TEXT("%s: %s"), PLUGIN_NAME, TEXT("Successfully uninitialized"));
 }
 
 //---------------------------------------------------------------------------//
@@ -129,11 +145,10 @@ BOOL Execute(INT32 CmdId, HWND)
         case CMD_SWITCH:
         {
             // 状態を切り替え
-            auto&& enable = settings::get().enable;
-            enable ^= true;
+            settings->enable ^= true;
 
             // ホットキーを登録
-            if ( enable )
+            if ( settings->enable )
             {
                 RegisterAllHotkeys(wnd->handle());
             }
@@ -146,7 +161,7 @@ BOOL Execute(INT32 CmdId, HWND)
             TTBPlugin_SetMenuProperty
             (
                 g_hPlugin, CMD_SWITCH, DISPMENU_CHECKED,
-                enable ? dmMenuChecked : dmUnchecked
+                settings->enable ? dmMenuChecked : dmUnchecked
             );
 
             return TRUE;
@@ -223,7 +238,7 @@ void UnregisterMyHotkey(HWND hwnd, INT32 id)
 // すべてのホットキーを登録する
 void RegisterAllHotkeys(HWND hwnd)
 {
-    const auto& commands = settings::get().commands;
+    const auto& commands = settings->commands;
 
     INT32 id = 0;
     for ( auto&& cmd: commands )
@@ -236,7 +251,7 @@ void RegisterAllHotkeys(HWND hwnd)
 // すべてのホットキーの登録を解除する
 void UnregisterAllHotkeys(HWND hwnd)
 {
-    const auto& commands = settings::get().commands;
+    const auto& commands = settings->commands;
 
     INT32 id = 0;
     for ( auto&& cmd: commands )
