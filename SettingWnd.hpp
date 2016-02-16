@@ -19,8 +19,12 @@
 #include "include/CtrlWnd.hpp"
 #include "include/Font.hpp"
 
+#if !defined(_UNICODE) && !defined(UNICOED)
+  #include "include/Transcode.hpp"
+#endif
+
 #include "Plugin.hpp"
-#include "Utility.hpp"
+#include "Main.hpp"
 
 #ifndef HOTKEYF_WIN
   #define HOTKEYF_WIN 0x10
@@ -870,7 +874,14 @@ bool OpenFileDialog
     // バッファにコピー
     LPWSTR pszFilePath;
     hr = item->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
-    ::StringCchCopy(buf, buf_size, pszFilePath);
+
+  #if defined(_UNICODE) || defined(UNICODE)
+    ::StringCchCopyW(buf, buf_size, pszFilePath);
+  #else
+    char ansi_buf [MAX_PATH];
+    tapetums::toMBCS(pszFilePath, ansi_buf, MAX_PATH);
+    ::StringCchCopyA(buf, buf_size, ansi_buf);
+  #endif
     ::CoTaskMemFree(pszFilePath);
 
     return true;
