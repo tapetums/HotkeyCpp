@@ -740,7 +740,7 @@ void GetKeynameString(INT16 vk, TCHAR* buf, size_t buf_size)
         TEXT("Left Shift"), TEXT("Right Shift"), TEXT("Left Ctrl"), TEXT("Right Ctrl"),
         TEXT("Left Alt"),   TEXT("Right Alt"),   TEXT("戻る"),      TEXT("進む"),
         TEXT("更新"),       TEXT("中止"),        TEXT("検索"),      TEXT("お気に入り"),
-        TEXT("HomePage"),   TEXT("Mute"),        TEXT("Vol Dwon"),  TEXT("Vol Up"),
+        TEXT("HomePage"),   TEXT("Mute"),        TEXT("Vol Down"),  TEXT("Vol Up"),
 
         // B0-BF
         TEXT("Next Track"), TEXT("Prev Track"), TEXT("Media Stop"), TEXT("Start/Stop"),
