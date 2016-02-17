@@ -41,6 +41,7 @@ PLUGIN_INFO* GetInfoByFilename(PLUGIN_INFO** infos, LPCTSTR Filename);
 INT32 GetCommandIndex   (const PLUGIN_INFO* info, INT32 CmdID);
 void  GetHotkeyString   (INT32 key, TCHAR* buf, size_t buf_size);
 void  GetCommandString  (LPCTSTR Filename, INT32 CmdID, TCHAR* buf, size_t buf_size);
+void  GetKeynameString  (INT16 vk, TCHAR* buf, size_t buf_size);
 void  CheckVKeyItem     (HWND hwnd, INT16 mod);
 void  ShowVKeyString    (HWND hItem, INT16 vk);
 void  SetVKey           (command* pcmd, INT32 delta);
@@ -671,6 +672,110 @@ INT32 GetCommandIndex
 
 //---------------------------------------------------------------------------//
 
+void GetKeynameString(INT16 vk, TCHAR* buf, size_t buf_size)
+{
+    constexpr const TCHAR* const KEY_NAME[] =
+    {
+        // 00-0F
+        TEXT("(なし)"),    TEXT("(なし)"), TEXT("(なし)"), TEXT("Cancel"),
+        TEXT("(なし)"),    TEXT("(なし)"), TEXT("(なし)"), TEXT("未定義"),
+        TEXT("Backspace"), TEXT("Tab"),    TEXT("(予約)"),   TEXT("(予約)"),
+        TEXT("Clear"),     TEXT("Enter"),  TEXT("未定義"), TEXT("未定義"),
+
+        // 10-1F
+        TEXT("Shift"),     TEXT("Ctrl"),      TEXT("Alt"),    TEXT("Pause"),
+        TEXT("Caps Lock"), TEXT("かな"),      TEXT("未定義"), TEXT(""),
+        TEXT(""),          TEXT("漢字"),      TEXT("未定義"), TEXT("Esc"),
+        TEXT("変換"),      TEXT("無変換"),    TEXT(""),       TEXT("IME"),
+
+        // 20-2F
+        TEXT("Space"),        TEXT("Page Up"), TEXT("Page Down"), TEXT("End"),
+        TEXT("Home"),         TEXT("←"),      TEXT("↑"),        TEXT("→"),
+        TEXT("↓"),           TEXT("Select"),  TEXT("Print"),     TEXT("Execute"),
+        TEXT("Print Screen"), TEXT("Insert"),  TEXT("Delete"),    TEXT("Help"),
+
+        // 30-3F
+        TEXT("0"), TEXT("1"), TEXT("2"), TEXT("3"),
+        TEXT("4"), TEXT("5"), TEXT("6"), TEXT("7"),
+        TEXT("8"), TEXT("9"), TEXT("未定義"), TEXT("未定義"),
+        TEXT("未定義"), TEXT("未定義"), TEXT("未定義"), TEXT("未定義"),
+
+        // 40-4F
+        TEXT("未定義"), TEXT("A"), TEXT("B"), TEXT("C"),
+        TEXT("D"),      TEXT("E"), TEXT("F"), TEXT("G"),
+        TEXT("H"),      TEXT("I"), TEXT("J"), TEXT("K"),
+        TEXT("L"),      TEXT("M"), TEXT("N"), TEXT("O"),
+
+        // 50-5F
+        TEXT("P"), TEXT("Q"), TEXT("R"), TEXT("S"),
+        TEXT("T"), TEXT("U"), TEXT("V"), TEXT("W"),
+        TEXT("X"), TEXT("Y"), TEXT("Z"), TEXT("Left Win"),
+        TEXT("Right Win"), TEXT("Application"), TEXT("(予約)"), TEXT("Sleep"),
+
+        // 60-6F
+        TEXT("Num 0"), TEXT("Num 1"), TEXT("Num 2"), TEXT("Num 3"),
+        TEXT("Num 4"), TEXT("Num 5"), TEXT("Num 6"), TEXT("Num 7"),
+        TEXT("Num 8"), TEXT("Num 9"), TEXT("Num *"), TEXT("Num +"),
+        TEXT("Num Enter"), TEXT("Num -"), TEXT("Num ."), TEXT("Num /"),
+
+        // 70-7F
+        TEXT("F1"),  TEXT("F2"),  TEXT("F3"),  TEXT("F4"),
+        TEXT("F5"),  TEXT("F6"),  TEXT("F7"),  TEXT("F8"),
+        TEXT("F9"),  TEXT("F10"), TEXT("F11"), TEXT("F12"),
+        TEXT("F13"), TEXT("F14"), TEXT("F15"), TEXT("F16"),
+
+        // 80-8F
+        TEXT("F17"), TEXT("F18"), TEXT("F19"), TEXT("F20"),
+        TEXT("F21"), TEXT("F22"), TEXT("F23"), TEXT("F24"),
+        TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"),
+        TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"),
+
+        // 90-9F
+        TEXT("Num Lock"), TEXT("Scroll Lock"), TEXT("(なし)"), TEXT("(なし)"),
+        TEXT("(なし)"),   TEXT("(なし)"),      TEXT("(なし)"), TEXT("(なし)"),
+        TEXT("(なし)"),   TEXT("(なし)"),      TEXT("(なし)"), TEXT("(なし)"),
+        TEXT("(なし)"),   TEXT("(なし)"),      TEXT("(なし)"), TEXT("(なし)"),
+
+        // A0-AF
+        TEXT("Left Shift"), TEXT("Right Shift"), TEXT("Left Ctrl"), TEXT("Right Ctrl"),
+        TEXT("Left Alt"),   TEXT("Right Alt"),   TEXT("戻る"),      TEXT("進む"),
+        TEXT("更新"),       TEXT("中止"),        TEXT("検索"),      TEXT("お気に入り"),
+        TEXT("HomePage"),   TEXT("Mute"),        TEXT("Vol Dwon"),  TEXT("Vol Up"),
+
+        // B0-BF
+        TEXT("Next Track"), TEXT("Prev Track"), TEXT("Media Stop"), TEXT("Start/Stop"),
+        TEXT("Mail"),       TEXT("Media"),      TEXT("App 1"),      TEXT("App 2"),
+        TEXT("(予約)"),     TEXT("(予約)"),     TEXT(":"),          TEXT(";"),
+        TEXT(","),          TEXT("-"),          TEXT("."),          TEXT("/"),
+
+        // C0-CF
+        TEXT("@"),      TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
+        TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
+        TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
+        TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
+
+        // D0-DF
+        TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
+        TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
+        TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"), TEXT("["),
+        TEXT("¥"),      TEXT("]"),      TEXT("^"),      TEXT("(なし)"),
+
+        // E0-EF
+        TEXT("(予約)"), TEXT("-"),      TEXT("\\"),     TEXT("(なし)"),
+        TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"),
+        TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"),
+        TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"),
+
+        // F0-FF
+        TEXT("Caps Lock"), TEXT("(なし)"),    TEXT("ひらがな"), TEXT("半角"),
+        TEXT("全角"),      TEXT("(なし)"),    TEXT("Attn"),     TEXT("CrSel"),
+        TEXT("ExSel"),     TEXT("Erase EOF"), TEXT("Play"),     TEXT("Zoom"),
+        TEXT("(予約)"),    TEXT("PA1"),       TEXT("(なし)"),   TEXT("(なし)"),
+    };
+
+    ::StringCchCopy(buf, buf_size, KEY_NAME[vk]);
+}
+
 void GetHotkeyString
 (
     INT32 key, TCHAR* buf, size_t buf_size
@@ -702,8 +807,7 @@ void GetHotkeyString
 
     // 仮想キーの文字列を取得
     const auto vk = LOBYTE(key);
-    const auto sc = ::MapVirtualKey(vk, MAPVK_VK_TO_VSC);
-    ::GetKeyNameText((sc << 16), vk_txt, MAX_PATH);
+    GetKeynameString(vk, vk_txt, MAX_PATH);
     ::StringCchCat(mod_txt, MAX_PATH, vk_txt);
 
     // 合成キー名と仮想キー名を連結
@@ -795,8 +899,7 @@ void ShowVKeyString
     TCHAR vk_txt[MAX_PATH];
     vk_txt[0] = '\0';
 
-    const auto sc = ::MapVirtualKey(vk, MAPVK_VK_TO_VSC);
-    ::GetKeyNameText((sc << 16), vk_txt, MAX_PATH);
+    GetKeynameString(vk, vk_txt, MAX_PATH);
 
     if ( vk_txt[0] == '\0' )
     {
