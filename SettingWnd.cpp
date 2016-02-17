@@ -920,7 +920,7 @@ void SetVKey
 {
     auto vk = LOBYTE(pcmd->key);
 
-    if ( delta < 0 )
+    if ( delta > 0 )
     {
         ++vk;
         if ( vk > 0xFF )
@@ -948,7 +948,7 @@ void SetCommandID
     command* pcmd, INT32 delta
 )
 {
-    if ( delta < 0 )
+    if ( delta > 0 )
     {
         ++pcmd->id;
         if ( pcmd->id > 255 )
@@ -956,7 +956,7 @@ void SetCommandID
             pcmd->id = 0;
         }
     }
-    else if ( delta > 0 )
+    else if ( delta < 0 )
     {
         --pcmd->id;
         if ( pcmd->id < 0 )
