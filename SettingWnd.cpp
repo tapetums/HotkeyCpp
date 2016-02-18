@@ -677,10 +677,10 @@ void GetKeynameString(INT16 vk, TCHAR* buf, size_t buf_size)
     constexpr const TCHAR* const KEY_NAME[] =
     {
         // 00-0F
-        TEXT("(なし)"),    TEXT("(なし)"), TEXT("(なし)"), TEXT("Cancel"),
-        TEXT("(なし)"),    TEXT("(なし)"), TEXT("(なし)"), TEXT("未定義"),
-        TEXT("Backspace"), TEXT("Tab"),    TEXT("(予約)"),   TEXT("(予約)"),
-        TEXT("Clear"),     TEXT("Enter"),  TEXT("未定義"), TEXT("未定義"),
+        TEXT("(なし)"),       TEXT("Left Click"), TEXT("Right Click"), TEXT("Cancel"),
+        TEXT("Center Click"), TEXT("X1 Click"),   TEXT("X2 Click"),    TEXT("未定義"),
+        TEXT("Backspace"),    TEXT("Tab"),        TEXT("(予約)"),      TEXT("(予約)"),
+        TEXT("Clear"),        TEXT("Enter"),      TEXT("未定義"),      TEXT("未定義"),
 
         // 10-1F
         TEXT("Shift"),     TEXT("Ctrl"),      TEXT("Alt"),    TEXT("Pause"),
@@ -867,25 +867,52 @@ void CheckVKeyItem
 {
     HWND hItem;
 
+    // Ctrl
     if ( mod & HOTKEYF_CONTROL )
     {
         hItem = ::GetDlgItem(hwnd, IDC_CHECK1);
         ::SendMessage(hItem, BM_SETCHECK, BST_CHECKED, 0);
     }
+    else
+    {
+        hItem = ::GetDlgItem(hwnd, IDC_CHECK1);
+        ::SendMessage(hItem, BM_SETCHECK, BST_UNCHECKED, 0);
+    }
+
+    // Shift
     if ( mod & HOTKEYF_SHIFT )
     {
         hItem = ::GetDlgItem(hwnd, IDC_CHECK2);
         ::SendMessage(hItem, BM_SETCHECK, BST_CHECKED, 0);
     }
+    else
+    {
+        hItem = ::GetDlgItem(hwnd, IDC_CHECK2);
+        ::SendMessage(hItem, BM_SETCHECK, BST_UNCHECKED, 0);
+    }
+
+    // Alt
     if ( mod & HOTKEYF_ALT )
     {
         hItem = ::GetDlgItem(hwnd, IDC_CHECK3);
         ::SendMessage(hItem, BM_SETCHECK, BST_CHECKED, 0);
     }
+    else
+    {
+        hItem = ::GetDlgItem(hwnd, IDC_CHECK3);
+        ::SendMessage(hItem, BM_SETCHECK, BST_UNCHECKED, 0);
+    }
+
+    // Win
     if ( mod & HOTKEYF_WIN )
     {
         hItem = ::GetDlgItem(hwnd, IDC_CHECK4);
         ::SendMessage(hItem, BM_SETCHECK, BST_CHECKED, 0);
+    }
+    else
+    {
+        hItem = ::GetDlgItem(hwnd, IDC_CHECK4);
+        ::SendMessage(hItem, BM_SETCHECK, BST_UNCHECKED, 0);
     }
 }
 
@@ -928,7 +955,7 @@ void SetVKey
             vk = 0x00;
         }
     }
-    else if ( delta > 0 )
+    else if ( delta < 0 )
     {
         --vk;
         if ( vk < 0x00 )
