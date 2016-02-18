@@ -97,7 +97,7 @@ PLUGIN_INFO g_info =
 //---------------------------------------------------------------------------//
 
 // TTBEvent_Init() の内部実装
-BOOL Init()
+BOOL WINAPI Init()
 {
     // 設定オブジェクトの生成
     if ( nullptr == settings )
@@ -118,7 +118,7 @@ BOOL Init()
 //---------------------------------------------------------------------------//
 
 // TTBEvent_Unload() の内部実装
-void Unload()
+void WINAPI Unload()
 {
     // ウィンドウの破棄
     if ( wnd )
@@ -138,7 +138,7 @@ void Unload()
 //---------------------------------------------------------------------------//
 
 // TTBEvent_Execute() の内部実装
-BOOL Execute(INT32 CmdId, HWND)
+BOOL WINAPI Execute(INT32 CmdId, HWND)
 {
     switch ( CmdId )
     {
@@ -187,7 +187,7 @@ BOOL Execute(INT32 CmdId, HWND)
 //---------------------------------------------------------------------------//
 
 // TTBEvent_WindowsHook() の内部実装
-void Hook(UINT Msg, WPARAM wParam, LPARAM lParam)
+void WINAPI Hook(UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(Msg);    // ERASE ME
     UNREFERENCED_PARAMETER(wParam); // ERASE ME
