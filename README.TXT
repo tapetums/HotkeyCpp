@@ -63,12 +63,15 @@ http://www.kmonos.net/nysl/
 TTBase を生み出された K2 さん、peach を 公開されている U さん、TTBaseCpp の作者さんを始め、
 数多くのプラグインを作られたそれぞれの作者さんたちに深い敬意と感謝を表します。
 http://ttbase.sourceforge.jp/
-http://seesaawiki.jp/ttbase/d/%A5%D7%A5%E9%A5%B0%A5%A4%A5%F3
+http://seesaawiki.jp/ttbase/d/
 http://white2.php.xdomain.jp/?page_id=27
 http://ttbase.coresv.com/uploader/
 
 
 【更新履歴】
+2016.02.19 v0.3.0.0
+ ・プラグインを再ロードした際に本体が落ちる問題を修正
+
 2016.02.17 v0.2.0.0
  ・仮想キーの文字列が正しく表示されるよう修正
 
