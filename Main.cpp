@@ -140,6 +140,8 @@ void WINAPI Unload()
 // TTBEvent_Execute() の内部実装
 BOOL WINAPI Execute(INT32 CmdId, HWND)
 {
+    if ( nullptr == settings || nullptr == wnd ) { return FALSE; }
+
     switch ( CmdId )
     {
         case CMD_SWITCH:
@@ -202,7 +204,7 @@ void RegisterMyHotkey(HWND hwnd, INT32 id, const command& cmd)
     UINT fsModifiers { 0 };
     UINT vk          { 0 };
 
-    //修飾キー
+    // 修飾キー
     if ( HIBYTE(cmd.key) & HOTKEYF_ALT )
     {
         fsModifiers |= MOD_ALT;
@@ -220,7 +222,7 @@ void RegisterMyHotkey(HWND hwnd, INT32 id, const command& cmd)
         fsModifiers |= MOD_WIN;
     }
 
-    //キー
+    // キー
     vk = LOBYTE(cmd.key);
 
     // Windows に 登録
@@ -238,6 +240,8 @@ void UnregisterMyHotkey(HWND hwnd, INT32 id)
 // すべてのホットキーを登録する
 void RegisterAllHotkeys(HWND hwnd)
 {
+    if ( nullptr == settings ) { return; }
+
     const auto& commands = settings->commands;
 
     INT32 id = 0;
@@ -251,6 +255,8 @@ void RegisterAllHotkeys(HWND hwnd)
 // すべてのホットキーの登録を解除する
 void UnregisterAllHotkeys(HWND hwnd)
 {
+    if ( nullptr == settings ) { return; }
+
     const auto& commands = settings->commands;
 
     INT32 id = 0;

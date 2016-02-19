@@ -96,7 +96,7 @@ SettingWnd::SettingWnd()
 
     // ホットキーを更新
     MakeCommandList();
-    if ( settings->enable )
+    if ( settings && settings->enable )
     {
         RegisterAllHotkeys(hwnd);
     }
@@ -216,6 +216,8 @@ LRESULT CALLBACK SettingWnd::OnHotkey
 
 void SettingWnd::MakeCommandList()
 {
+    if ( nullptr == settings ) { return; }
+
     TCHAR buf [MAX_PATH];
 
     INT32 index = 0;
@@ -248,6 +250,8 @@ void SettingWnd::ClearCommandList()
 
 void SettingWnd::AddItem(HWND hwnd)
 {
+    if ( nullptr == settings ) { return; }
+
     INT_PTR ret;
     command cmd;
 
@@ -313,7 +317,8 @@ void SettingWnd::AddItem(HWND hwnd)
 
 void SettingWnd::EditItem(HWND hwnd, INT32 index)
 {
-    if ( index < 0 ) { return; }
+    if ( nullptr == settings ) { return; }
+    if ( index < 0 )           { return; }
 
     auto&& commands = settings->commands;
 
@@ -360,7 +365,8 @@ void SettingWnd::EditItem(HWND hwnd, INT32 index)
 
 void SettingWnd::DeleteItem(HWND hwnd, INT32 index)
 {
-    if ( index < 0 ) { return; }
+    if ( nullptr == settings ) { return; }
+    if ( index < 0 )           { return; }
 
     const auto ret = ::MessageBox
     (
@@ -610,6 +616,8 @@ LRESULT CALLBACK SubclassProc
 
 const command* const GetCommandByIndex(INT32 index)
 {
+    if ( nullptr == settings ) { return nullptr; }
+
     const auto& commands = settings->commands;
 
     INT32 i = 0;
