@@ -45,6 +45,7 @@ public:
 
 private:
     LRESULT CALLBACK OnDestory(HWND hwnd);
+    LRESULT CALLBACK OnShown  (HWND hwnd, BOOL bShown);
     LRESULT CALLBACK OnNotify (HWND hwnd, INT32 wID, NMHDR* pNMHdr);
     LRESULT CALLBACK OnCommand(HWND hwnd, INT16 wID);
     LRESULT CALLBACK OnHotkey (HWND hwnd, INT32 idHotKey, WORD fsModifiers, WORD vk);

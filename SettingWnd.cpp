@@ -28,6 +28,12 @@
 #endif
 
 //---------------------------------------------------------------------------//
+// グローバル変数
+//---------------------------------------------------------------------------//
+
+PLUGIN_INFO** infos { nullptr };
+
+//---------------------------------------------------------------------------//
 // 前方宣言
 //---------------------------------------------------------------------------//
 
@@ -37,7 +43,7 @@ INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK SubclassProc(HWND, UINT, WPARAM, LPARAM, UINT_PTR, DWORD_PTR);
 
 const command* const GetCommandByIndex(INT32 index);
-PLUGIN_INFO* GetInfoByFilename(PLUGIN_INFO** infos, LPCTSTR Filename);
+PLUGIN_INFO* GetInfoByFilename(LPCTSTR Filename);
 INT32 GetCommandIndex   (const PLUGIN_INFO* info, INT32 CmdID);
 void  GetHotkeyString   (INT32 key, TCHAR* buf, size_t buf_size);
 void  GetCommandString  (LPCTSTR Filename, INT32 CmdID, TCHAR* buf, size_t buf_size);
@@ -95,7 +101,6 @@ SettingWnd::SettingWnd()
     btn_del. SetText(TEXT("削除"));
 
     // ホットキーを更新
-    MakeCommandList();
     if ( settings && settings->enable )
     {
         RegisterAllHotkeys(hwnd);
@@ -114,13 +119,17 @@ LRESULT CALLBACK SettingWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
     {
         Hide(); return 0;
     }
-    else if ( uMsg == WM_COMMAND )
+    else if ( uMsg == WM_SHOWWINDOW )
     {
-        return OnCommand(hwnd, LOWORD(wp));
+        return OnShown(hwnd, BOOL(wp));
     }
     else if ( uMsg == WM_NOTIFY )
     {
         return OnNotify(hwnd, LOWORD(wp), LPNMHDR(lp));
+    }
+    else if ( uMsg == WM_COMMAND )
+    {
+        return OnCommand(hwnd, LOWORD(wp));
     }
     else if ( uMsg == WM_HOTKEY )
     {
@@ -136,6 +145,8 @@ LRESULT CALLBACK SettingWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
 LRESULT CALLBACK SettingWnd::OnDestory(HWND hwnd)
 {
+    if ( infos ) { TTBPlugin_FreePluginInfoArray(infos); }
+
     // ホットキーの登録を解除
     UnregisterAllHotkeys(hwnd);
     return 0;
@@ -143,20 +154,16 @@ LRESULT CALLBACK SettingWnd::OnDestory(HWND hwnd)
 
 //---------------------------------------------------------------------------//
 
-LRESULT CALLBACK SettingWnd::OnCommand(HWND hwnd, INT16 wID)
+LRESULT CALLBACK SettingWnd::OnShown(HWND, BOOL bShown)
 {
-    if ( wID == CTRL::BTN_ADD ) // 追加
-    {
-        AddItem(hwnd);
-    }
-    else if ( wID == CTRL::BTN_EDIT )// 編集
-    {
-        EditItem(hwnd, list_cmd.SelectedIndex());
-    }
-    else if ( wID == CTRL::BTN_DEL ) // 削除
-    {
-        DeleteItem(hwnd, list_cmd.SelectedIndex());
-    }
+    if ( ! bShown ) { return 0; }
+
+    if ( infos ) { TTBPlugin_FreePluginInfoArray(infos); }
+    infos = TTBPlugin_GetAllPluginInfo(); // リークに注意
+
+    ClearCommandList();
+    MakeCommandList();
+
     return 0;
 }
 
@@ -178,6 +185,25 @@ LRESULT CALLBACK SettingWnd::OnNotify(HWND hwnd, INT32, NMHDR* pNMHdr)
         }
     }
 
+    return 0;
+}
+
+//---------------------------------------------------------------------------//
+
+LRESULT CALLBACK SettingWnd::OnCommand(HWND hwnd, INT16 wID)
+{
+    if ( wID == CTRL::BTN_ADD ) // 追加
+    {
+        AddItem(hwnd);
+    }
+    else if ( wID == CTRL::BTN_EDIT )// 編集
+    {
+        EditItem(hwnd, list_cmd.SelectedIndex());
+    }
+    else if ( wID == CTRL::BTN_DEL ) // 削除
+    {
+        DeleteItem(hwnd, list_cmd.SelectedIndex());
+    }
     return 0;
 }
 
@@ -432,7 +458,10 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             ::SetWindowText(hItem, pcmd->filename);
 
             // プラグインの一覧をコンボボックスに登録
-            const auto infos = TTBPlugin_GetAllPluginInfo(); // リークに注意
+            if ( nullptr == infos )
+            {
+                infos = TTBPlugin_GetAllPluginInfo(); // リークに注意
+            }
             for ( size_t index = 0; ; ++index )
             {
                 const auto info = infos[index];
@@ -440,7 +469,6 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
                 ::SendMessage(hItem, CB_ADDSTRING, 0, (LPARAM)info->Filename);
             }
-            TTBPlugin_FreePluginInfoArray(infos); // 忘れるとメモリリーク
 
             // コマンド引数を表示
             hItem = ::GetDlgItem(hwnd, IDC_EDIT3);
@@ -637,10 +665,15 @@ const command* const GetCommandByIndex(INT32 index)
 
 PLUGIN_INFO* GetInfoByFilename
 (
-    PLUGIN_INFO** infos, LPCTSTR Filename
+    LPCTSTR Filename
 )
 {
     PLUGIN_INFO* info = nullptr;
+
+    if ( nullptr == infos )
+    {
+        infos = TTBPlugin_GetAllPluginInfo();
+    }
 
     for ( size_t i = 0; ; ++i )
     {
@@ -784,6 +817,8 @@ void GetKeynameString(INT16 vk, TCHAR* buf, size_t buf_size)
     ::StringCchCopy(buf, buf_size, KEY_NAME[vk]);
 }
 
+//---------------------------------------------------------------------------//
+
 void GetHotkeyString
 (
     INT32 key, TCHAR* buf, size_t buf_size
@@ -836,9 +871,7 @@ void GetCommandString
     LPCTSTR Filename, INT32 CmdID, TCHAR* buf, size_t buf_size
 )
 {
-    const auto infos = TTBPlugin_GetAllPluginInfo(); // リークに注意
-
-    const auto info = GetInfoByFilename(infos, Filename);
+    const auto info = GetInfoByFilename(Filename);
     if ( nullptr == info )
     {
         ::StringCchCopy(buf, buf_size, Filename);
@@ -862,8 +895,6 @@ void GetCommandString
             );
         }
     }
-
-    TTBPlugin_FreePluginInfoArray(infos); // <- 忘れるとメモリリーク
 }
 
 //---------------------------------------------------------------------------//
