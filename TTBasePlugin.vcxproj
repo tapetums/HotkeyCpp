@@ -310,7 +310,6 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="include\UWnd.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MessageDef.cpp" />
     <ClCompile Include="Plugin.cpp" />

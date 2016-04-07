@@ -16,9 +16,6 @@
     <Filter Include="Header Files\include">
       <UniqueIdentifier>{911dec49-9169-4f8f-844a-6b39b09c823b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\include">
-      <UniqueIdentifier>{9de7bbc9-fc6a-44f6-b422-412218890931}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -32,9 +29,6 @@
     </ClCompile>
     <ClCompile Include="MessageDef.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\UWnd.cpp">
-      <Filter>Source Files\include</Filter>
     </ClCompile>
     <ClCompile Include="SettingWnd.cpp">
       <Filter>Source Files</Filter>
