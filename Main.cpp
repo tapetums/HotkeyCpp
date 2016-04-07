@@ -189,11 +189,8 @@ BOOL WINAPI Execute(INT32 CmdId, HWND)
 //---------------------------------------------------------------------------//
 
 // TTBEvent_WindowsHook() の内部実装
-void WINAPI Hook(UINT Msg, WPARAM wParam, LPARAM lParam)
+void WINAPI Hook(UINT, WPARAM, LPARAM)
 {
-    UNREFERENCED_PARAMETER(Msg);    // ERASE ME
-    UNREFERENCED_PARAMETER(wParam); // ERASE ME
-    UNREFERENCED_PARAMETER(lParam); // ERASE ME
 }
 
 //---------------------------------------------------------------------------//
