@@ -146,6 +146,7 @@ LRESULT CALLBACK SettingWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 LRESULT CALLBACK SettingWnd::OnDestory(HWND hwnd)
 {
     if ( infos ) { TTBPlugin_FreePluginInfoArray(infos); }
+    infos = nullptr;
 
     // ホットキーの登録を解除
     UnregisterAllHotkeys(hwnd);
