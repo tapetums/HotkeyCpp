@@ -799,7 +799,11 @@ void GetKeynameString(INT16 vk, TCHAR* buf, size_t buf_size)
         TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
         TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"), TEXT("(予約)"),
         TEXT("(なし)"), TEXT("(なし)"), TEXT("(なし)"), TEXT("["),
+      #if defined (_UNICODE) || defined(UNICODE)
         TEXT("¥"),      TEXT("]"),      TEXT("^"),      TEXT("(なし)"),
+      #else
+        TEXT("\\"),     TEXT("]"),      TEXT("^"),      TEXT("(なし)"),
+      #endif
 
         // E0-EF
         TEXT("(予約)"), TEXT("-"),      TEXT("\\"),     TEXT("(なし)"),
