@@ -68,8 +68,12 @@ public:
     std::list<command> commands;
 
 public:
-    Settings();
-    ~Settings();
+    Settings() { load(); }
+    ~Settings() = default;
+
+public:
+    void load();
+    void save();
 };
 
 extern Settings* settings;
@@ -78,7 +82,7 @@ extern Settings* settings;
 // Methods
 //---------------------------------------------------------------------------//
 
-inline Settings::Settings()
+inline void Settings::load()
 {
     TCHAR path [MAX_PATH];
     TCHAR name [MAX_PATH];
@@ -140,7 +144,7 @@ inline Settings::Settings()
 
 //---------------------------------------------------------------------------//
 
-inline Settings::~Settings()
+inline void Settings::save()
 {
     TCHAR path [MAX_PATH];
     TCHAR name [MAX_PATH];

@@ -335,6 +335,9 @@ void SettingWnd::AddItem(HWND hwnd)
             RegisterAllHotkeys(hwnd);
         }
 
+        // 設定ファイルに保存
+        settings->save();
+
         // 無限ループから脱出
         break;
     }
@@ -375,6 +378,9 @@ void SettingWnd::EditItem(HWND hwnd, INT32 index)
     if ( ret == IDOK )
     {
         *pcmd = cmd; // 書き戻す
+
+        // 設定ファイルに保存
+        settings->save();
     }
 
     // リストを再表示
@@ -423,6 +429,9 @@ void SettingWnd::DeleteItem(HWND hwnd, INT32 index)
             {
                 RegisterAllHotkeys(hwnd);
             }
+
+            // 設定ファイルに保存
+            settings->save();
 
             break;
         }
