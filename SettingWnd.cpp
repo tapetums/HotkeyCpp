@@ -62,6 +62,8 @@ bool  OpenFileDialog    (TCHAR* buf, size_t buf_size);
 
 SettingWnd::SettingWnd()
 {
+    Register(PLUGIN_NAME);
+
     // フォントを生成
     font.create(16, TEXT("Meiryo UI"), FW_REGULAR);
 

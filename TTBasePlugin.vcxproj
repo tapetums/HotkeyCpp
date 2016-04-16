@@ -147,7 +147,8 @@
       </IgnoreAllDefaultLibraries>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>x86.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -201,7 +202,8 @@
       </IgnoreAllDefaultLibraries>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>amd64.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -254,7 +256,8 @@
       </IgnoreAllDefaultLibraries>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>x86.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -306,7 +309,8 @@
       </IgnoreAllDefaultLibraries>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>amd64.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
