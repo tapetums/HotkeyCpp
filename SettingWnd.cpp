@@ -495,7 +495,7 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             hItem = ::GetDlgItem(hwnd, IDC_SPIN2);
             ::SendMessage
             (
-                hItem, UDM_SETRANGE, 0, MAKELPARAM(255, 0)
+                hItem, UDM_SETRANGE, 0, MAKELPARAM(UD_MAXVAL, 0)
             );
             ::SendMessage
             (
@@ -1033,7 +1033,7 @@ void SetCommandID
     if ( delta > 0 )
     {
         ++pcmd->id;
-        if ( pcmd->id > 255 )
+        if ( pcmd->id > UD_MAXVAL )
         {
             pcmd->id = 0;
         }
@@ -1043,7 +1043,7 @@ void SetCommandID
         --pcmd->id;
         if ( pcmd->id < 0 )
         {
-            pcmd->id = 255;
+            pcmd->id = UD_MAXVAL;
         }
     }
 }
