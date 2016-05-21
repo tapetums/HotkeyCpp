@@ -51,7 +51,7 @@ void  GetKeynameString  (INT16 vk, TCHAR* buf, size_t buf_size);
 void  CheckVKeyItem     (HWND hwnd, INT16 mod);
 void  ShowVKeyString    (HWND hItem, INT16 vk);
 void  SetVKey           (command* pcmd, INT32 delta);
-void  SetCommandID      (command* pcmd, INT32 delta);
+void  SetCommandID      (command* pcmd, WORD cmdID);
 void  ShowVKeyValue     (HWND hwnd, command* pcmd);
 void  ShowCommandCaption(HWND hwnd, command* pcmd);
 bool  OpenFileDialog    (TCHAR* buf, size_t buf_size);
@@ -495,7 +495,7 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
             hItem = ::GetDlgItem(hwnd, IDC_SPIN2);
             ::SendMessage
             (
-                hItem, UDM_SETRANGE, 0, MAKELPARAM(255, 0)
+                hItem, UDM_SETRANGE, 0, MAKELPARAM(UD_MAXVAL, 0)
             );
             ::SendMessage
             (
@@ -561,6 +561,20 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
                 const auto hItem = ::GetDlgItem(hwnd, IDC_EDIT3);
                 ::GetWindowText(hItem, pcmd->param, MAX_PATH);
             }
+            else if ( wID == IDC_EDIT4 )
+            {
+                // コマンドのキャプションを表示
+                const auto code = HIWORD(wp);
+                if ( code != EN_CHANGE ) { return TRUE; }
+
+                const auto hItem = ::GetDlgItem(hwnd, IDC_SPIN2);
+                const auto cmdID = ::SendMessage(hItem, UDM_GETPOS, 0, 0);
+                if ( HIWORD(cmdID) == 0 )
+                {
+                    SetCommandID(pcmd, LOWORD(cmdID));
+                    ShowCommandCaption(hwnd, pcmd);
+                }
+            }
             else if ( wID == IDC_CHECK1 )
             {
                 pcmd->key ^= (HOTKEYF_CONTROL << 8); // Ctrl
@@ -594,12 +608,6 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
                 // キーの値を表示
                 SetVKey(pcmd, pNMud->iDelta);
                 ShowVKeyValue(hwnd, pcmd);
-            }
-            else if ( pNMud->hdr.hwndFrom == ::GetDlgItem(hwnd, IDC_SPIN2) )
-            {
-                // コマンドのキャプションを表示
-                SetCommandID(pcmd, pNMud->iDelta);
-                ShowCommandCaption(hwnd, pcmd);
             }
 
             return TRUE;
@@ -1027,24 +1035,17 @@ void SetVKey
 
 void SetCommandID
 (
-    command* pcmd, INT32 delta
+    command* pcmd, WORD cmdID
 )
 {
-    if ( delta > 0 )
+    pcmd->id = cmdID;
+    if ( pcmd->id > UD_MAXVAL )
     {
-        ++pcmd->id;
-        if ( pcmd->id > 255 )
-        {
-            pcmd->id = 0;
-        }
+        pcmd->id = 0;
     }
-    else if ( delta < 0 )
+    else if ( pcmd->id < 0 )
     {
-        --pcmd->id;
-        if ( pcmd->id < 0 )
-        {
-            pcmd->id = 255;
-        }
+        pcmd->id = UD_MAXVAL;
     }
 }
 
