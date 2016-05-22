@@ -77,7 +77,7 @@ SettingWnd::SettingWnd()
 
     // 子コントロールを生成
     auto style = WS_VSCROLL | WS_HSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL;
-    auto styleEx = LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_HEADERDRAGDROP;
+    auto styleEx = LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_HEADERDRAGDROP | LVS_EX_INFOTIP;
     list_cmd.Create(style, styleEx, hwnd, CTRL::LIST_COMMAND);
     list_cmd.Bounds(4, 4, 472, 280);
     list_cmd.SetFont(font);
@@ -174,17 +174,34 @@ LRESULT CALLBACK SettingWnd::OnShown(HWND, BOOL bShown)
 
 LRESULT CALLBACK SettingWnd::OnNotify(HWND hwnd, INT32, NMHDR* pNMHdr)
 {
-    if ( pNMHdr->idFrom == CTRL::LIST_COMMAND && pNMHdr->code == NM_DBLCLK )
+    if ( pNMHdr->idFrom == CTRL::LIST_COMMAND )
     {
-        // リストをダブルクリックしたとき
-        const auto index = list_cmd.SelectedIndex();
-        if ( index < 0 )
+        if ( pNMHdr->code == NM_DBLCLK )
         {
-            AddItem(hwnd);
+            // リストをダブルクリックしたとき
+            const auto index = list_cmd.SelectedIndex();
+            if ( index < 0 )
+            {
+                AddItem(hwnd);
+            }
+            else
+            {
+                EditItem(hwnd, index);
+            }
         }
-        else
+        else if ( pNMHdr->code == LVN_GETINFOTIP )
         {
-            EditItem(hwnd, index);
+            TCHAR buf [MAX_PATH];
+            auto pNMinfo = LPNMLVGETINFOTIP(pNMHdr);
+
+            LVITEM item { };
+            item.mask       = TVIF_TEXT;
+            item.iItem      = pNMinfo->iItem;
+            item.pszText    = buf;
+            item.cchTextMax = MAX_PATH;
+            ListView_GetItem(list_cmd, &item);
+
+            pNMinfo->pszText = item.pszText;
         }
     }
 
