@@ -527,6 +527,28 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
 
             return TRUE;
         }
+        case WM_SIZE:
+        {
+            const auto w = LOWORD(lp);
+            const auto hItem = ::GetDlgItem(hwnd, IDC_EDIT5);
+
+            ::SetWindowPos
+            (
+                hItem, nullptr,
+                0, 0, w - 161 - 12, 21,
+                SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED
+            );
+
+            return TRUE;
+        }
+        case WM_GETMINMAXINFO:
+        {
+            auto pmmi = LPMINMAXINFO(lp);
+            pmmi->ptMinTrackSize.x = 485;
+            pmmi->ptMinTrackSize.y = 181;
+            pmmi->ptMaxTrackSize.y = 181;
+            return TRUE;
+        }
         case WM_COMMAND:
         {
             const auto wID = LOWORD(wp);
