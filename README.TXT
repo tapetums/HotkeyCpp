@@ -14,8 +14,8 @@ TTBase もしくは 互換プログラムのプラグインとして動作しま
 VC++14 の ランタイムが必要です。
 お持ちでない場合は、Microsoft社 のページからダウンロードをお願い致します。
 
-[Visual Studio 2015 Update 1 の Visual C++ 再頒布可能パッケージ]
-(https://www.microsoft.com/ja-jp/download/details.aspx?id=49984)
+[Microsoft Visual C++ 2015 再頒布可能パッケージ Update 2]
+(https://www.microsoft.com/ja-JP/download/details.aspx?id=51682)
 （デッドリンクの際はご容赦下さい。）
 
 
@@ -69,6 +69,9 @@ http://ttbase.coresv.com/uploader/
 
 
 【更新履歴】
+2016.05.22 v0.3.3.0
+ ・コマンドIDを直接入力しても反映されない不具合を修正 (Thanks to y80qqvht)
+
 2016.04.16 v0.3.2.0
  ・設定ファイルを編集するたびに保存するようにした
 
